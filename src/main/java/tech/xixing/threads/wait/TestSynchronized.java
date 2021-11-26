@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
  *              为了保证进入到队列当中的线程调度是有序的，主线程睡眠很有必要
  *              那么为什么主线程睡眠1下就能保证这些线程的顺序调度呢?这个问题读者可以思考一下后而我会重点分析
  *              好了现在我们来看结果
+ *
+ *  @link https://blog.csdn.net/java_lyvee/article/details/110996764
  */
 @Slf4j
 public class TestSynchronized {

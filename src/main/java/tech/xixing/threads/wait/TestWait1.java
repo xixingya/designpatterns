@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * @link https://blog.csdn.net/java_lyvee/article/details/110996764
+ */
 @Slf4j
 public class TestWait1 {
 

@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * @link https://blog.csdn.net/java_lyvee/article/details/110996764
+ */
 @Slf4j
 public class TestReentrantLock {
 
