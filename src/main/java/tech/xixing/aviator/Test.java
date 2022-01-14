@@ -15,7 +15,8 @@ public class Test {
             HashMap<String, Object> objectObjectHashMap = new HashMap<>();
             objectObjectHashMap.put("value","qaq");
             input.put("roomId",objectObjectHashMap);
-            Object execute = AviatorEvaluator.execute("roomId.value", input);
+            //使用不带getInstance会使得全局开启缓存失效
+            Object execute = AviatorEvaluator.getInstance().execute("roomId.value", input);
             //System.out.println(execute);
         }
         System.out.println(System.currentTimeMillis()-current);
