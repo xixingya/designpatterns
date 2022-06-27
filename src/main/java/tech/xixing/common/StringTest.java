@@ -1,11 +1,14 @@
 package tech.xixing.common;
 
+import org.springframework.util.Assert;
+
 import java.util.HashSet;
 
 public class StringTest {
-    public static final String qaq = "qaq";
+    public static final String qaq = StringTest.class.getName();
 
     public String getSome(){
+        Assert.notNull("qaq",()->"Expected parsed RequestPath in request attribute \"" + qaq + "\".");
         return qaq+"123";
     }
 
