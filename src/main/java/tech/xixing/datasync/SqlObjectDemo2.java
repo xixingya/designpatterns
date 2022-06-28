@@ -1,16 +1,23 @@
 package tech.xixing.datasync;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
+import org.apache.calcite.config.Lex;
 import org.apache.calcite.jdbc.CalciteConnection;
+import org.apache.calcite.jdbc.CalcitePrepare;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.schema.SchemaPlus;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.calcite.server.CalciteServerStatement;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.tools.FrameworkConfig;
+import org.apache.calcite.tools.Frameworks;
+import org.apache.calcite.tools.Planner;
+import org.apache.calcite.tools.RelRunner;
 import tech.xixing.datasync.adapter.JsonSchema;
 
 /**
@@ -26,10 +33,11 @@ public class SqlObjectDemo2 {
         System.out.println("total:" + duration);
     }
 
-    public static void run() throws ClassNotFoundException, SQLException {
+    public static void run() throws Exception {
         Connection connection = DriverManager.getConnection("jdbc:calcite:");
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         SchemaPlus rootSchema = optiqConnection.getRootSchema();
+        rootSchema.setCacheEnabled(false);
 
         String json = "[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":300,\"USER_NAME\":\"user1\"},"
                 + "{\"USER_ID\":310,\"CUST_ID\":{\"a\":2},\"PROD_ID\":210.45,\"USER_NAME\":\"user2\"},"
@@ -39,7 +47,7 @@ public class SqlObjectDemo2 {
                 + "{\"USER_ID\":350,\"CUST_ID\":{\"a\":6},\"PROD_ID\":210.49,\"USER_NAME\":\"user6\"},"
                 + "{\"USER_ID\":360,\"CUST_ID\":{\"a\":7},\"PROD_ID\":210.40,\"USER_NAME\":\"user7\"}]";
 
-        String json2="[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":300,\"USER_NAME\":\"user1\"},"
+        String json2="[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":1,\"USER_NAME\":\"user1\"},"
                 + "{\"USER_ID\":0,\"CUST_ID\":{\"a\":4},\"PROD_ID\":210.45,\"USER_NAME\":\"user2\"},"
                 + "{\"USER_ID\":115,\"CUST_ID\":{\"a\":115},\"PROD_ID\":210.46,\"USER_NAME\":\"user3\"},"
                 + "{\"USER_ID\":330,\"CUST_ID\":{\"a\":4},\"PROD_ID\":210.47,\"USER_NAME\":\"user4\"},"
@@ -47,22 +55,25 @@ public class SqlObjectDemo2 {
                 + "{\"USER_ID\":350,\"CUST_ID\":{\"a\":6},\"PROD_ID\":210.49,\"USER_NAME\":\"user6\"},"
                 + "{\"USER_ID\":360,\"CUST_ID\":{\"a\":7},\"PROD_ID\":210.40,\"USER_NAME\":\"user7\"}]";
 
-        Statement statement = connection.createStatement();
 
 
         ResultSet resultSet = null;
         long begin = System.currentTimeMillis();
+        String sql = "select * from \"abc" + "\".\"test\" where USER_ID>0 ";
+        System.out.println(sql);
+        JsonSchema test = new JsonSchema("test", json);
+        rootSchema.add("abc", test);
+        PreparedStatement statement = connection.prepareStatement(sql);
 
-        rootSchema.add("abc", new JsonSchema("test", json));
-        resultSet = statement.executeQuery(
-                "select * from \"abc" + "\".\"test\" where USER_ID>0 ");
+        //RelRoot relRoot = genRelRoot(connection, sql);
+        //PreparedStatement statement = preparedStatement(optiqConnection, relRoot.rel);
 
-        long mid = System.currentTimeMillis();
+        resultSet = statement.executeQuery();
+
         System.out.println("query:" + (System.currentTimeMillis() - begin));
-
-        rootSchema.add("abc", new JsonSchema("test", json2));
-        resultSet = statement.executeQuery(
-                "select * from \"abc" + "\".\"test\" where USER_ID=115 ");
+        long mid = System.currentTimeMillis();
+        test.setTarget(json2);
+        resultSet = statement.executeQuery();
         System.out.println("query:" + (System.currentTimeMillis() - mid));
 
         while (resultSet.next()) {
@@ -76,5 +87,41 @@ public class SqlObjectDemo2 {
         resultSet.close();
         statement.close();
         connection.close();
+    }
+
+    /**
+     * Planner解析，校验，然后生成RelNode，使用mysql的sql语法格式
+     *
+     * @param connection
+     * @param sql
+     * @return
+     * @throws Exception 参考自：https://zhuanlan.zhihu.com/p/65345335
+     */
+    public static RelRoot genRelRoot(Connection connection, String sql) throws Exception {
+        //从 conn 中获取相关的环境和配置，生成对应配置
+        CalciteServerStatement st = connection.createStatement().unwrap(CalciteServerStatement.class);
+        CalcitePrepare.Context prepareContext = st.createPrepareContext();
+        final FrameworkConfig config = Frameworks.newConfigBuilder()
+                .parserConfig(SqlParser.configBuilder().setLex(Lex.MYSQL).build())
+                .defaultSchema(prepareContext.getRootSchema().plus())
+//                .traitDefs(ConventionTraitDef.INSTANCE, RelDistributionTraitDef.INSTANCE)
+                .build();
+        Planner planner = Frameworks.getPlanner(config);
+        RelRoot root = null;
+        try {
+            SqlNode parse1 = planner.parse(sql);
+            SqlNode validate = planner.validate(parse1);
+            root = planner.rel(validate);
+            RelNode rel = root.rel;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return root;
+    }
+
+    public static PreparedStatement preparedStatement(Connection connection,RelNode rel) throws SQLException {
+        RelRunner relRunner = connection.unwrap(RelRunner.class);
+        return relRunner.prepareStatement(rel);
     }
 }

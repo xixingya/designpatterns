@@ -64,6 +64,17 @@ public class JsonSchema extends AbstractSchema {
         }
     }
 
+    public void setTarget(String target) {
+        this.target = target;
+        final ImmutableMap.Builder<String, Table> builder = ImmutableMap.builder();
+
+        final Table table = fieldRelation();
+        if (table != null) {
+            builder.put(topic, table);
+            this.table = builder.build();
+        }
+    }
+
     public JsonSchema(String topic, JSONArray targetArray) {
         super();
         this.targetArray = targetArray;
