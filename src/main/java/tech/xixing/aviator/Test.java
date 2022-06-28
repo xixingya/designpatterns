@@ -38,8 +38,15 @@ public class Test {
         objectObjectHashMap.put("value","qaq");
 
         input.put("roomId",objectObjectHashMap);
-        Expression compile = AviatorEvaluator.compile("nums = 13");
+
+        Expression compile = AviatorEvaluator.compile("value = roomId.value");
+        long start = System.currentTimeMillis();
         compile.execute(input);
+        compile.execute(input);
+        compile.execute(input);
+        compile.execute(input);
+        compile.execute(input);
+        System.out.println("query:"+(System.currentTimeMillis()-start));
         System.out.println(compile.getSourceFile());
     }
 }
