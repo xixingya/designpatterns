@@ -139,10 +139,17 @@ public class JsonSchema extends AbstractSchema {
             final List<RelDataType> types = new ArrayList<RelDataType>();
             final List<String> names = new ArrayList<String>();
             JSONObject jsonobj = jsonarr.getJSONObject(0);
-            for (String string : jsonobj.keySet()) {
+            for (String key : jsonobj.keySet()) {
                 final RelDataType type;
-                type = typeFactory.createJavaType(jsonobj.get(string).getClass());
-                names.add(string);
+                Object value = jsonobj.get(key);
+                Class clazz = null;
+                if(value instanceof JSON){
+                    clazz = String.class;
+                }else {
+                    clazz = value.getClass();
+                }
+                type = typeFactory.createJavaType(clazz);
+                names.add(key);
                 types.add(type);
             }
             if (names.isEmpty()) {
