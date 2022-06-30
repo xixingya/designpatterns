@@ -6,13 +6,17 @@ import java.sql.*;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.jdbc.CalcitePrepare;
+import org.apache.calcite.model.JsonFunction;
+import org.apache.calcite.model.JsonMapSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.schema.SchemaPlus;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.calcite.schema.impl.TableFunctionImpl;
 import org.apache.calcite.server.CalciteServerStatement;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.fun.SqlJsonValueFunction;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.Frameworks;
@@ -37,7 +41,6 @@ public class SqlObjectDemo2 {
         Connection connection = DriverManager.getConnection("jdbc:calcite:");
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         SchemaPlus rootSchema = optiqConnection.getRootSchema();
-        rootSchema.setCacheEnabled(false);
 
         String json = "[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":300,\"USER_NAME\":\"user1\"},"
                 + "{\"USER_ID\":310,\"CUST_ID\":{\"a\":2},\"PROD_ID\":210.45,\"USER_NAME\":\"user2\"},"
@@ -59,7 +62,7 @@ public class SqlObjectDemo2 {
 
         ResultSet resultSet = null;
         long begin = System.currentTimeMillis();
-        String sql = "select * from \"abc" + "\".\"test\" where USER_ID>0 ";
+        String sql = "select JSON_VALUE(CUST_ID,'$.a') as cid from \"abc" + "\".\"test\" where JSON_VALUE(CUST_ID,'$.a')>6 ";
         System.out.println(sql);
         JsonSchema test = new JsonSchema("test", json);
         rootSchema.add("abc", test);

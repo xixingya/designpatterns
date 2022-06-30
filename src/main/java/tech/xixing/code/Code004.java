@@ -1,5 +1,7 @@
 package tech.xixing.code;
 
+import com.alibaba.fastjson.JSON;
+
 import java.util.*;
 
 /**
@@ -22,7 +24,7 @@ public class Code004 {
         System.out.println(map.values());
     }
 
-    public static void main(String[] args) {
+    public static void main3(String[] args) {
        // 解答失败: 测试用例:"" "a" 测试结果:false 期望结果:true stdout:
         System.out.println(oneEditAway("abc", "adac"));
     }
@@ -84,6 +86,5 @@ public class Code004 {
         return sb.length()>S.length()?S:sb.toString();
 
     }
-
 
 }
