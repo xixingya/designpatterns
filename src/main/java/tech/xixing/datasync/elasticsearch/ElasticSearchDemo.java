@@ -26,7 +26,7 @@ public class ElasticSearchDemo {
         Constructor<ElasticsearchSchema> declaredConstructor = ElasticsearchSchema.class.getDeclaredConstructor(RestClient.class, ObjectMapper.class, String.class, int.class);
         declaredConstructor.setAccessible(true);
         // 测试用，把fetch size调到1，可以发现，每次resultset.next()的时候都会调用scroll去es查询，由此可见，使用的是scroll api去查询的，一次查询的size就是这个size
-        ElasticsearchSchema elasticsearchSchema = declaredConstructor.newInstance(restClient, new ObjectMapper(), "bigdata_rec_bixin_timeline",5);
+        ElasticsearchSchema elasticsearchSchema = declaredConstructor.newInstance(restClient, new ObjectMapper(), "bigdata_rec_timeline",5);
         //ElasticsearchSchema elasticsearchSchema = new ElasticsearchSchema(restClient, new ObjectMapper(), "bigdata_rec_bixin_timeline");
 
         // 2.构建Connection
