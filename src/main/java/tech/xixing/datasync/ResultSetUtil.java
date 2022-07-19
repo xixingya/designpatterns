@@ -49,13 +49,16 @@ public class ResultSetUtil {
             }
             results.add(header);
         }
+        int count = 0;
         while (resultSet.next()) {
+            count++;
             ArrayList<Object> row = new ArrayList<>();
             for (int i = 1; i <= columnCount; i++) {
                 row.add(resultSet.getObject(i));
             }
             results.add(row);
         }
+        System.out.println("count = "+count);
         return results;
     }
 
