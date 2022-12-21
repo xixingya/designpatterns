@@ -20,6 +20,7 @@ public class Test {
             objectObjectHashMap.put("value","qaq");
 
             input.put("roomId",objectObjectHashMap);
+            AviatorEvaluator.compile("aaa");
             //使用不带getInstance会使得全局开启缓存失效
             Object execute = AviatorEvaluator.getInstance().execute("#nums[0].uid", input,true);
             System.out.println(execute);
@@ -39,11 +40,13 @@ public class Test {
 
         input.put("roomId",objectObjectHashMap);
         input.put("user",TestEnum.MOBILE_ADULT);
+        input.put("currentTime","2022-07-12 12:23:00");
 
         Expression compile = AviatorEvaluator.compile("value = str(user)");
         long start = System.currentTimeMillis();
         compile.execute(input);
+        AviatorEvaluator.execute("asd = qaq.value!='10'",input);
         System.out.println("query:"+(System.currentTimeMillis()-start));
-        System.out.println(compile.getSourceFile());
+        //System.out.println(compile.getSourceFile());
     }
 }
