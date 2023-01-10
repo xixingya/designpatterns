@@ -26,6 +26,7 @@ import org.apache.calcite.tools.Planner;
 import org.apache.calcite.tools.RelRunner;
 import tech.xixing.datasync.adapter.JsonSchema;
 import tech.xixing.datasync.udf.TestUdf;
+import java.util.LinkedHashMap;
 
 /**
  * @author liuzhifei
@@ -48,29 +49,47 @@ public class SqlObjectDemo2 {
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         SchemaPlus rootSchema = optiqConnection.getRootSchema();
 
-        String json = "[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":300,\"USER_NAME\":\"user1\"},"
-                + "{\"USER_ID\":310,\"CUST_ID\":{\"a\":2},\"PROD_ID\":210.45,\"USER_NAME\":\"user2\"},"
-                + "{\"USER_ID\":320,\"CUST_ID\":{\"a\":3},\"PROD_ID\":210.46,\"USER_NAME\":\"user3\"},"
-                + "{\"USER_ID\":330,\"CUST_ID\":{\"a\":4},\"PROD_ID\":210.47,\"USER_NAME\":\"user4\"},"
-                + "{\"USER_ID\":340,\"CUST_ID\":{\"a\":5},\"PROD_ID\":210.48,\"USER_NAME\":\"user5\"},"
-                + "{\"USER_ID\":350,\"CUST_ID\":{\"a\":6},\"PROD_ID\":210.49,\"USER_NAME\":\"user6\"},"
-                + "{\"USER_ID\":360,\"CUST_ID\":{\"a\":7},\"PROD_ID\":210.40,\"USER_NAME\":\"user7\"}]";
+        String json = "[{\n" +
+                "  \"roomTag\": \"超级王牌\",\n" +
+                "  \"uid\": \"14322342343\",\n" +
+                "  \"roomStatus\": \"1\",\n" +
+                "  \"catId\": \"412592068762796032\",\n" +
+                "  \"catTeamDesc\": \"不限/娱乐局/不限/四排\",\n" +
+                "  \"catName\": \"和平精英\",\n" +
+                "  \"appId\": \"10\",\n" +
+                "  \"varTimeStamp\": \"1672748524185\",\n" +
+                "  \"roomTitle\": \"猛男甜妹多声线 三保一车队\uD83D\uDCB0可双排\",\n" +
+                "  \"teamChatId\": \"0\",\n" +
+                "  \"roomId\": \"sfdsfdsfdsfds\",\n" +
+                "  \"sourceFrom\": \"0\"\n" +
+                "}]";
 
-        String json2="[{\"CUST_ID\":{\"a\":1},\"PROD_ID\":23.56,\"USER_ID\":1,\"USER_NAME\":\"user1\"},"
-                + "{\"USER_ID\":0,\"CUST_ID\":{\"a\":4},\"PROD_ID\":210.45,\"USER_NAME\":\"user2\"},"
-                + "{\"USER_ID\":115,\"CUST_ID\":{\"a\":115},\"PROD_ID\":210.46,\"USER_NAME\":\"user3\"},"
-                + "{\"USER_ID\":330,\"CUST_ID\":{\"a\":4},\"PROD_ID\":210.47,\"USER_NAME\":\"user4\"},"
-                + "{\"USER_ID\":340,\"CUST_ID\":{\"a\":5},\"PROD_ID\":210.48,\"USER_NAME\":\"user5\"},"
-                + "{\"USER_ID\":350,\"CUST_ID\":{\"a\":6},\"PROD_ID\":210.49,\"USER_NAME\":\"user6\"},"
-                + "{\"USER_ID\":360,\"CUST_ID\":{\"a\":7},\"PROD_ID\":210.40,\"USER_NAME\":\"user7\"}]";
+        String json2="[{\n" +
+                "  \"uid\": \"343431434\",\n" +
+                "  \"roomStatus\": \"0\",\n" +
+                "  \"appId\": \"10\",\n" +
+                "  \"varTimeStamp\": \"1672751295656\",\n" +
+                "  \"roomId\": \"fsfdsfvxcv\",\n" +
+                "  \"sourceFrom\": \"0\"\n" +
+                "}]";
 
 
 
         ResultSet resultSet = null;
-        long begin = System.currentTimeMillis();
-        String sql = "select * from(select JSON_VALUE(CUST_ID,'$.a') as cid, my_func(1) as myres from abc" + ".test where JSON_VALUE(CUST_ID,'$.a')>6) where CID= 7 ";
+        String sql = "select * from abc" + ".test where sourceFrom = 0 and appId = 10 and catTeamDesc = '不限/娱乐局/不限/四排'";
         System.out.println(sql);
-        JsonSchema test = new JsonSchema("test", json);
+        // 需要固定字段位置，以免缺少的情况会导致PreparedStatement报错。
+        LinkedHashMap<String,Class> fields = new LinkedHashMap<>();
+        fields.put("uid",String.class);
+        fields.put("roomTag",String.class);
+        fields.put("roomStatus",String.class);
+        fields.put("catId",String.class);
+        fields.put("catTeamDesc",String.class);
+        fields.put("catName",String.class);
+        fields.put("appId",String.class);
+        fields.put("sourceFrom",String.class);
+        fields.put("roomId",String.class);
+        JsonSchema test = new JsonSchema("test", json,fields);
         rootSchema.add("abc", test);
         rootSchema.add("my_func", ScalarFunctionImpl.create(TestUdf.class,"add1"));
         PreparedStatement statement = connection.prepareStatement(sql);
@@ -78,12 +97,14 @@ public class SqlObjectDemo2 {
         //RelRoot relRoot = genRelRoot(connection, sql);
         //PreparedStatement statement = preparedStatement(optiqConnection, relRoot.rel);
 
+        long begin = System.currentTimeMillis();
         resultSet = statement.executeQuery();
-
         System.out.println("query:" + (System.currentTimeMillis() - begin));
         long mid = System.currentTimeMillis();
-        test.setTarget(json2);
-        resultSet = statement.executeQuery();
+        for (int i = 0; i < 100; i++) {
+            test.setTarget(json2);
+            resultSet = statement.executeQuery();
+        }
         System.out.println("query:" + (System.currentTimeMillis() - mid));
 
         while (resultSet.next()) {
