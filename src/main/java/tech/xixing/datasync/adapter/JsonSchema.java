@@ -43,7 +43,7 @@ public class JsonSchema extends AbstractSchema {
     private JSONArray targetArray;
 
     // 初始化的时候保存的格式，如果没保存，则存在后续不一致问题。
-    private LinkedHashMap<String, Class> fields;
+    private LinkedHashMap<String, Class<?>> fields;
 
     Map<String, Table> table = null;
 
@@ -69,7 +69,7 @@ public class JsonSchema extends AbstractSchema {
         }
     }
 
-    public JsonSchema(String topic, String target, LinkedHashMap<String,Class> fields) {
+    public JsonSchema(String topic, String target, LinkedHashMap<String,Class<?>> fields) {
         super();
         this.topic = topic;
         if (!target.startsWith("[")) {
@@ -156,14 +156,14 @@ public class JsonSchema extends AbstractSchema {
     private static class JsonTable extends AbstractTable implements ScannableTable {
         private final JSONArray jsonarr;
 
-        private final LinkedHashMap<String,Class> fields;
+        private final LinkedHashMap<String,Class<?>> fields;
         // private final Enumerable<Object> enumerable;
 
         public JsonTable(JSONArray obj) {
             this.jsonarr = obj;
             this.fields = null;
         }
-        public JsonTable(JSONArray obj,LinkedHashMap<String,Class> fields) {
+        public JsonTable(JSONArray obj,LinkedHashMap<String,Class<?>> fields) {
             this.jsonarr = obj;
             this.fields = fields;
         }
@@ -175,7 +175,12 @@ public class JsonSchema extends AbstractSchema {
             if(fields!=null){
                 for (String key : fields.keySet()) {
                     names.add(key);
-                    types.add(typeFactory.createJavaType(fields.get(key)));
+                    Class clazz = fields.get(key);
+                    //如果是json类型，则传入string类型
+                    if(JSON.class.isAssignableFrom(clazz)){
+                        clazz = String.class;
+                    }
+                    types.add(typeFactory.createJavaType(clazz));
                 }
                 return typeFactory.createStructType(Pair.zip(names, types));
             }
@@ -226,7 +231,7 @@ public class JsonSchema extends AbstractSchema {
             enumerator = Linq4j.enumerator(objs);
         }
 
-        public JsonEnumerator(JSONArray jsonarr,LinkedHashMap<String,Class> fields) {
+        public JsonEnumerator(JSONArray jsonarr,LinkedHashMap<String,Class<?>> fields) {
             List<Object[]> objs = new ArrayList<Object[]>();
 
             for (Object obj : jsonarr) {

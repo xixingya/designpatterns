@@ -1,11 +1,14 @@
 package tech.xixing.datasync.exec;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -26,11 +29,21 @@ public class SQLTransformer {
         List<JSONObject> res = new ArrayList<>();
         try{
             ResultSet resultSet = sqlConfig.getStatement().executeQuery();
+            LinkedHashMap<String, Class<?>> fields = sqlConfig.getFields();
             while (resultSet.next()) {
                 JSONObject jo = new JSONObject();
                 int n = resultSet.getMetaData().getColumnCount();
                 for (int i = 1; i <= n; i++) {
-                    jo.put(resultSet.getMetaData().getColumnName(i), resultSet.getObject(i));
+                    String columnName = resultSet.getMetaData().getColumnName(i);
+                    Class<?> aClass = fields.get(columnName);
+                    Object object = resultSet.getObject(i);
+                    if(JSONObject.class.equals(aClass)){
+                        object = JSONObject.parseObject(object.toString());
+                    }
+                    if(JSONArray.class.equals(aClass)){
+                        object = JSONObject.parseArray(object.toString());
+                    }
+                    jo.put(resultSet.getMetaData().getColumnLabel(i), object);
                 }
                 res.add(jo);
                 // System.out.println(jo.toJSONString());
