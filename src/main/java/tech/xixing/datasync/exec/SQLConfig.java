@@ -42,7 +42,6 @@ public class SQLConfig {
         Properties properties = new Properties();
         // 需要添加这个去除大小写，要不然自定义的udf会被转成大写从而报没有这个函数的错误
         properties.setProperty("caseSensitive", "false");
-        properties.setProperty(CalciteConnectionProperty.FUN.camelName(),"mysql");
         Connection connection = DriverManager.getConnection("jdbc:calcite:", properties);
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         rootSchema = optiqConnection.getRootSchema();
