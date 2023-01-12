@@ -2,8 +2,10 @@ package tech.xixing.datasync.exec;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
+import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.parser.SqlParseException;
 import tech.xixing.datasync.adapter.JsonSchema;
 
 import java.sql.*;
@@ -26,16 +28,21 @@ public class SQLConfig {
 
     private PreparedStatement statement;
 
+    private LinkedHashMap<String,Class<?>> fields;
 
-    public SQLConfig(String sql, String table) throws SQLException {
+
+    public SQLConfig(String sql, String table) throws SQLException, SqlParseException {
         this(sql,table,null);
     }
 
-    public SQLConfig(String sql, String table, LinkedHashMap<String,Class> fields) throws SQLException {
-        this.sql = sql;
+    public SQLConfig(String sql, String table, LinkedHashMap<String,Class<?>> fields) throws SQLException, SqlParseException {
+        // 把mysql语法的sql转成calcite的语法
+        this.sql = SQLUtils.changeSQL2StandardCalciteSQL(sql);
+        this.fields = fields;
         Properties properties = new Properties();
         // 需要添加这个去除大小写，要不然自定义的udf会被转成大写从而报没有这个函数的错误
         properties.setProperty("caseSensitive", "false");
+        properties.setProperty(CalciteConnectionProperty.FUN.camelName(),"mysql");
         Connection connection = DriverManager.getConnection("jdbc:calcite:", properties);
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         rootSchema = optiqConnection.getRootSchema();
@@ -46,7 +53,7 @@ public class SQLConfig {
                 "  \"state\": \"1\"\n" +
                 "}",fields);
         rootSchema.add("kafka", jsonSchema);
-        statement = connection.prepareStatement(sql);
+        statement = connection.prepareStatement(this.sql);
     }
 
     public void setData(String jsonArray){
