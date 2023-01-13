@@ -4,6 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.impl.ScalarFunctionImpl;
+import tech.xixing.datasync.udf.TestUdf;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,6 +55,11 @@ public class SQLTransformer {
             log.error("exec query error sql = {}",sqlConfig.getSql(),e);
         }
         return res;
+    }
+
+    public void registerUdf(String name, Class<?> clazz){
+        SchemaPlus rootSchema = sqlConfig.getRootSchema();
+        rootSchema.add(name, ScalarFunctionImpl.create(clazz,"execute"));
     }
 
     public static void main(String[] args) {

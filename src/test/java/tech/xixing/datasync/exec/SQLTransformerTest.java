@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import tech.xixing.datasync.udf.AviatorUdf;
+
 /**
  * @author liuzhifei
  * @date 2023/1/11 10:56 上午
@@ -57,6 +59,7 @@ class SQLTransformerTest {
 
         SQLConfig sqlConfig = new SQLConfig(sql, table, fields);
         SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
+        sqlTransformer.registerUdf("aviator_func", AviatorUdf.class);
         long l = System.currentTimeMillis();
         List<JSONObject> res = sqlTransformer.transform("[\n" +
                 "  {\n" +
@@ -203,6 +206,12 @@ class SQLTransformerTest {
         String s = SQLUtils.changeSQL2StandardCalciteSQL(sql);
         // transform(s);
         System.out.println(s);
+    }
+
+    @Test
+    void testAviatorUdf() throws Exception{
+        String sql = "select `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
+        transform(sql);
     }
 
 

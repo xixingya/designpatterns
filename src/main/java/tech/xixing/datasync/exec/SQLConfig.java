@@ -5,8 +5,10 @@ import lombok.Data;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.parser.SqlParseException;
 import tech.xixing.datasync.adapter.JsonSchema;
+import tech.xixing.datasync.udf.AviatorUdf;
 
 import java.sql.*;
 import java.util.LinkedHashMap;
@@ -28,6 +30,8 @@ public class SQLConfig {
 
     private PreparedStatement statement;
 
+    private Connection connection;
+
     private LinkedHashMap<String,Class<?>> fields;
 
 
@@ -42,7 +46,7 @@ public class SQLConfig {
         Properties properties = new Properties();
         // 需要添加这个去除大小写，要不然自定义的udf会被转成大写从而报没有这个函数的错误
         properties.setProperty("caseSensitive", "false");
-        Connection connection = DriverManager.getConnection("jdbc:calcite:", properties);
+        connection = DriverManager.getConnection("jdbc:calcite:", properties);
         CalciteConnection optiqConnection = connection.unwrap(CalciteConnection.class);
         rootSchema = optiqConnection.getRootSchema();
         jsonSchema = new JsonSchema(table, "{\n" +
@@ -52,11 +56,16 @@ public class SQLConfig {
                 "  \"state\": \"1\"\n" +
                 "}",fields);
         rootSchema.add("kafka", jsonSchema);
+        rootSchema.add("aviator_func", ScalarFunctionImpl.create(AviatorUdf.class,"execute"));
         statement = connection.prepareStatement(this.sql);
     }
 
     public void setData(String jsonArray){
         jsonSchema.setTarget(jsonArray);
+    }
+
+    public void prepared() throws SQLException {
+        statement = connection.prepareStatement(sql);
     }
 
     public void execute(String jsonArray) throws SQLException {

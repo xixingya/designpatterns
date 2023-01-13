@@ -1,6 +1,8 @@
 package tech.xixing.datasync.udf;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.googlecode.aviator.AviatorEvaluator;
 
 /**
  * @author liuzhifei
@@ -8,7 +10,8 @@ import com.alibaba.fastjson.JSON;
  */
 public class AviatorUdf {
 
-    public static JSON add1(String jsonStr){
-        return null;
+    public static Object execute(String jsonStr,String expression){
+        JSONObject jsonObject = JSON.parseObject(jsonStr);
+        return AviatorEvaluator.execute(expression, jsonObject, true);
     }
 }
