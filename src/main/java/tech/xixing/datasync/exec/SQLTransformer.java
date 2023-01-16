@@ -1,12 +1,11 @@
 package tech.xixing.datasync.exec;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
-import tech.xixing.datasync.udf.TestUdf;
+import tech.xixing.datasync.config.SQLConfig;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

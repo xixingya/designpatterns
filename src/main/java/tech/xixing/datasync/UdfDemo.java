@@ -2,7 +2,7 @@ package tech.xixing.datasync;
 
 import org.apache.calcite.sql.parser.SqlParseException;
 import tech.xixing.datasync.anno.EnableCustomUdf;
-import tech.xixing.datasync.exec.SQLConfig;
+import tech.xixing.datasync.config.SQLConfig;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;

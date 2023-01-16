@@ -1,18 +1,15 @@
 package tech.xixing.datasync.exec;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.calcite.sql.parser.SqlParseException;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
 import tech.xixing.datasync.anno.EnableCustomUdf;
+import tech.xixing.datasync.config.SQLConfig;
 import tech.xixing.datasync.udf.AviatorUdf;
 
 /**
@@ -214,7 +211,13 @@ class SQLTransformerTest {
 
     @Test
     void testAviatorUdf() throws Exception{
-        String sql = "select `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
+        String sql = "select uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
+        transform(sql);
+    }
+
+    @Test
+    void testUdtf()throws Exception{
+        String sql = "select cat, uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test left join lateral table(test_split(`catTeamDesc`,'/')) as t(cat) on true";
         transform(sql);
     }
 
