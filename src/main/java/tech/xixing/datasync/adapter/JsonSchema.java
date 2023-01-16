@@ -39,7 +39,7 @@ import java.util.LinkedHashMap;
  */
 public class JsonSchema extends AbstractSchema {
     private String target;
-    private String topic;
+    private String databaseName;
     private JSONArray targetArray;
 
     // 初始化的时候保存的格式，如果没保存，则存在后续不一致问题。
@@ -52,9 +52,9 @@ public class JsonSchema extends AbstractSchema {
      *
      * @param target Object whose fields will be sub-objects of the schema
      */
-    public JsonSchema(String topic, String target) {
+    public JsonSchema(String databaseName, String target) {
         super();
-        this.topic = topic;
+        this.databaseName = databaseName;
         if (!target.startsWith("[")) {
             this.target = '[' + target + ']';
         } else {
@@ -64,14 +64,14 @@ public class JsonSchema extends AbstractSchema {
 
         final Table table = fieldRelation();
         if (table != null) {
-            builder.put(topic, table);
+            builder.put(databaseName, table);
             this.table = builder.build();
         }
     }
 
     public JsonSchema(String topic, String target, LinkedHashMap<String,Class<?>> fields) {
         super();
-        this.topic = topic;
+        this.databaseName = topic;
         if (!target.startsWith("[")) {
             this.target = '[' + target + ']';
         } else {
@@ -93,25 +93,25 @@ public class JsonSchema extends AbstractSchema {
 
         final Table table = fieldRelation();
         if (table != null) {
-            builder.put(topic, table);
+            builder.put(databaseName, table);
             this.table = builder.build();
         }
     }
 
-    public JsonSchema(String topic, JSONArray targetArray) {
+    public JsonSchema(String databaseName, JSONArray targetArray) {
         super();
         this.targetArray = targetArray;
-        this.topic = topic;
+        this.databaseName = databaseName;
         final ImmutableMap.Builder<String, Table> builder = ImmutableMap.builder();
         final Table table = fieldRelation();
-        builder.put(topic, table);
+        builder.put(databaseName, table);
         this.table = builder.build();
 
     }
 
     @Override
     public String toString() {
-        return "JsonSchema(topic=" + topic + ":target=" + target + ")";
+        return "JsonSchema(topic=" + databaseName + ":target=" + target + ")";
     }
 
     /**
@@ -168,6 +168,7 @@ public class JsonSchema extends AbstractSchema {
             this.fields = fields;
         }
 
+        @Override
         public RelDataType getRowType(RelDataTypeFactory typeFactory) {
             final List<RelDataType> types = new ArrayList<RelDataType>();
             final List<String> names = new ArrayList<String>();
@@ -206,12 +207,15 @@ public class JsonSchema extends AbstractSchema {
             return typeFactory.createStructType(Pair.zip(names, types));
         }
 
+        @Override
         public Statistic getStatistic() {
             return Statistics.UNKNOWN;
         }
 
+        @Override
         public Enumerable<Object[]> scan(DataContext root) {
             return new AbstractEnumerable<Object[]>() {
+                @Override
                 public Enumerator<Object[]> enumerator() {
                     return new JsonEnumerator(jsonarr,fields);
                 }
@@ -249,18 +253,22 @@ public class JsonSchema extends AbstractSchema {
             enumerator = Linq4j.enumerator(objs);
         }
 
+        @Override
         public Object[] current() {
             return (Object[]) enumerator.current();
         }
 
+        @Override
         public boolean moveNext() {
             return enumerator.moveNext();
         }
 
+        @Override
         public void reset() {
             enumerator.reset();
         }
 
+        @Override
         public void close() {
             enumerator.close();
         }

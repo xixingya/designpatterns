@@ -57,8 +57,9 @@ public class SQLTransformer {
         return res;
     }
 
-    public void registerUdf(String name, Class<?> clazz){
+    public void registerUdf(String name, Class<?> clazz) throws SQLException {
         SchemaPlus rootSchema = sqlConfig.getRootSchema();
+        // sqlConfig.rePrepared();
         rootSchema.add(name, ScalarFunctionImpl.create(clazz,"execute"));
     }
 
