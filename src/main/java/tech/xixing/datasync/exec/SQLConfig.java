@@ -1,6 +1,7 @@
 package tech.xixing.datasync.exec;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.Builder;
 import lombok.Data;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteConnection;
@@ -8,11 +9,15 @@ import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.parser.SqlParseException;
 import tech.xixing.datasync.adapter.JsonSchema;
+import tech.xixing.datasync.config.UdfConfig;
 import tech.xixing.datasync.udf.AviatorUdf;
+import tech.xixing.datasync.udf.UdfFactory;
 
 import java.sql.*;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author liuzhifei
@@ -56,7 +61,12 @@ public class SQLConfig {
                 "  \"state\": \"1\"\n" +
                 "}",fields);
         rootSchema.add("kafka", jsonSchema);
-        rootSchema.add("aviator_func", ScalarFunctionImpl.create(AviatorUdf.class,"execute"));
+        // 获取被注解的udf
+        Set<UdfConfig> udfByTable = UdfFactory.getUdfByTable(table);
+        for (UdfConfig udfConfig : udfByTable) {
+            rootSchema.add(udfConfig.getName(),ScalarFunctionImpl.create(udfConfig.getMethod()));
+        }
+        // rootSchema.add("aviator_func", ScalarFunctionImpl.create(AviatorUdf.class,"execute"));
         statement = connection.prepareStatement(this.sql);
     }
 
@@ -64,7 +74,8 @@ public class SQLConfig {
         jsonSchema.setTarget(jsonArray);
     }
 
-    public void prepared() throws SQLException {
+
+    public void rePrepared() throws SQLException {
         statement = connection.prepareStatement(sql);
     }
 

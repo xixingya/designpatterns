@@ -10,12 +10,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringRunner;
+import tech.xixing.datasync.anno.EnableCustomUdf;
 import tech.xixing.datasync.udf.AviatorUdf;
 
 /**
  * @author liuzhifei
  * @date 2023/1/11 10:56 上午
  */
+@EnableCustomUdf(scanPackage = "tech.xixing.datasync.udf")
 class SQLTransformerTest {
 
     @Test
