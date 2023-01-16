@@ -25,8 +25,7 @@ public class UdfFactory {
 
 
     public static Set<UdfConfig> getUdfByTable(String tableName){
-        Set<UdfConfig> res = new HashSet<>();
-        res.addAll(globalUdf);
+        Set<UdfConfig> res = new HashSet<>(globalUdf);
         Set<UdfConfig> udfConfigs = tableCustomUdf.computeIfAbsent(tableName,k->new HashSet<>());
         res.addAll(udfConfigs);
         return res;
@@ -37,9 +36,12 @@ public class UdfFactory {
         Class<?> mainApplicationClass = deduceMainApplicationClass();
         if(mainApplicationClass!=null&&mainApplicationClass.isAnnotationPresent(EnableCustomUdf.class)){
             EnableCustomUdf enableCustomUdf = mainApplicationClass.getAnnotation(EnableCustomUdf.class);
-            String scanPackage = enableCustomUdf.scanPackage();
-            setUdfByPackage(scanPackage);
+            String[] scanPackages = enableCustomUdf.scanPackage();
+            for (String scanPackage : scanPackages) {
+                setUdfByPackage(scanPackage);
+            }
         }
+        // 默认的udf仓库
         setUdfByPackage("tech.xixing.datasync.udf");
     }
 

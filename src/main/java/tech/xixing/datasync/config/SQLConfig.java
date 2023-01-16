@@ -1,4 +1,4 @@
-package tech.xixing.datasync.exec;
+package tech.xixing.datasync.config;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.Builder;
@@ -7,10 +7,13 @@ import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
+import org.apache.calcite.schema.impl.TableFunctionImpl;
 import org.apache.calcite.sql.parser.SqlParseException;
 import tech.xixing.datasync.adapter.JsonSchema;
 import tech.xixing.datasync.config.UdfConfig;
+import tech.xixing.datasync.exec.SQLUtils;
 import tech.xixing.datasync.udf.AviatorUdf;
+import tech.xixing.datasync.udf.DefaultUdtf;
 import tech.xixing.datasync.udf.UdfFactory;
 
 import java.sql.*;
@@ -66,6 +69,7 @@ public class SQLConfig {
         for (UdfConfig udfConfig : udfByTable) {
             rootSchema.add(udfConfig.getName(),ScalarFunctionImpl.create(udfConfig.getMethod()));
         }
+        rootSchema.add("test_split", TableFunctionImpl.create(DefaultUdtf.class,"split"));
         // rootSchema.add("aviator_func", ScalarFunctionImpl.create(AviatorUdf.class,"execute"));
         statement = connection.prepareStatement(this.sql);
     }

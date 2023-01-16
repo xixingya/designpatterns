@@ -14,4 +14,5 @@ import java.lang.annotation.Target;
 public @interface Udf {
     String name();
     String tableName() default "";
+    String type() default "udf";
 }
