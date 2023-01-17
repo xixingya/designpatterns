@@ -39,10 +39,10 @@ public class SQLTransformer {
                     String columnName = resultSet.getMetaData().getColumnName(i);
                     Class<?> aClass = fields.get(columnName);
                     Object object = resultSet.getObject(i);
-                    if(JSONObject.class.equals(aClass)){
+                    if(JSONObject.class.equals(aClass)&&object!=null){
                         object = JSONObject.parseObject(object.toString());
                     }
-                    if(JSONArray.class.equals(aClass)){
+                    if(JSONArray.class.equals(aClass)&&object!=null){
                         object = JSONObject.parseArray(object.toString());
                     }
                     jo.put(resultSet.getMetaData().getColumnLabel(i), object);
