@@ -13,6 +13,7 @@ import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.type.SqlTypeName;
+import tech.xixing.datasync.anno.Udf;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  */
 public class DefaultUdtf{
 
+    @Udf(name = "test_spilt",type = "udtf")
     public static QueryableTable split(String str,String reg){
         List<String> items;
         if(str==null){

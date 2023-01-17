@@ -7,13 +7,18 @@ import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.avatica.util.Quoting;
 import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
-import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.schema.ScannableTable;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.ddl.SqlColumnDeclaration;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.dialect.PrestoSqlDialect;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl;
+import org.apache.calcite.sql.parser.impl.SqlParserImpl;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +49,52 @@ public class SQLUtils {
 
         SqlParser sqlParser = SqlParser.create(sql, config);
         SqlNode sqlNode = sqlParser.parseQuery();
+        SqlKind kind = sqlNode.getKind();
+
         //通过sqlNode把mysql的语法，改成Calcite的语法
         return sqlNode.toSqlString(CalciteSqlDialect.DEFAULT).getSql();
+    }
+
+    public static ScannableTable getTableByCreateSql(String sql) throws SqlParseException {
+        SqlParser.Config config = SqlParser.config().withLex(Lex.MYSQL).withParserFactory(SqlDdlParserImpl.FACTORY);
+        SqlParser sqlParser = SqlParser.create(sql, config);
+
+        SqlNode sqlNode = sqlParser.parseStmt();
+        SqlKind kind = sqlNode.getKind();
+        switch (kind){
+            case CREATE_TABLE:
+                handleCreate(sqlNode);
+                break;
+            default:
+                break;
+        }
+        return null;
+    }
+
+    private static void handleCreate(SqlNode sqlNode){
+        SqlCreate sqlCreate = (SqlCreate) sqlNode;
+        List<SqlNode> operandList = sqlCreate.getOperandList();
+        for (SqlNode node : operandList) {
+            SqlKind kind = node.getKind();
+            if(kind.equals(SqlKind.IDENTIFIER)){
+                SqlIdentifier sqlIdentifier = (SqlIdentifier) node;
+                System.out.println(sqlIdentifier.toString());
+            }
+            if(kind.equals(SqlKind.OTHER)){
+                SqlNodeList sqlNodeList = (SqlNodeList)node;
+                for (SqlNode temp : sqlNodeList) {
+                    SqlColumnDeclaration sqlColumnDeclaration = (SqlColumnDeclaration) temp;
+                    System.out.println(sqlColumnDeclaration.dataType.getTypeName().toString());
+                }
+            }
+            // System.out.println(node.toSqlString(CalciteSqlDialect.DEFAULT).getSql());
+        }
+    }
+
+    public static void main(String[] args) throws SqlParseException {
+        getTableByCreateSql("CREATE TABLE ods_kafka_student_scores (\n" +
+                "  `name` varchar,\n" +
+                "  `list` `ARRAY<ROW<course STRING,score INT>>`\n" +
+                ")");
     }
 }
