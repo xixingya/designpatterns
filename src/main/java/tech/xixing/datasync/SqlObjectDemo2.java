@@ -79,7 +79,7 @@ public class SqlObjectDemo2 {
         String sql = "select * from abc" + ".test where sourceFrom = 0 and appId = 10 and catTeamDesc = '不限/娱乐局/不限/四排'";
         System.out.println(sql);
         // 需要固定字段位置，以免缺少的情况会导致PreparedStatement报错。
-        LinkedHashMap<String,Class<?>> fields = new LinkedHashMap<>();
+        LinkedHashMap<String,Object> fields = new LinkedHashMap<>();
         fields.put("uid",String.class);
         fields.put("roomTag",String.class);
         fields.put("roomStatus",String.class);

@@ -19,6 +19,7 @@ import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractSchema;
 import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.sql.SqlTypeNameSpec;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.BuiltInMethod;
 import org.apache.calcite.util.Pair;
@@ -44,7 +45,7 @@ public class JsonSchema extends AbstractSchema {
     private JSONArray targetArray;
 
     // 初始化的时候保存的格式，如果没保存，则存在后续不一致问题。
-    private LinkedHashMap<String, Class<?>> fields;
+    private LinkedHashMap<String, Object> fields;
 
     Map<String, Table> table = null;
 
@@ -70,7 +71,8 @@ public class JsonSchema extends AbstractSchema {
         }
     }
 
-    public JsonSchema(String topic, String target, LinkedHashMap<String,Class<?>> fields) {
+
+    public JsonSchema(String topic, String target, LinkedHashMap<String,Object> fields) {
         super();
         this.databaseName = topic;
         if (!target.startsWith("[")) {
@@ -152,127 +154,5 @@ public class JsonSchema extends AbstractSchema {
             return new JsonTable(jsonarr,fields);
         }
         return new JsonTable(jsonarr);
-    }
-
-    private static class JsonTable extends AbstractTable implements ScannableTable {
-        private final JSONArray jsonarr;
-
-        private final LinkedHashMap<String,Class<?>> fields;
-        // private final Enumerable<Object> enumerable;
-
-        public JsonTable(JSONArray obj) {
-            this.jsonarr = obj;
-            this.fields = null;
-        }
-        public JsonTable(JSONArray obj,LinkedHashMap<String,Class<?>> fields) {
-            this.jsonarr = obj;
-            this.fields = fields;
-        }
-
-        @Override
-        public RelDataType getRowType(RelDataTypeFactory typeFactory) {
-            final List<RelDataType> types = new ArrayList<RelDataType>();
-            final List<String> names = new ArrayList<String>();
-            // 通过传入的字段判断
-            if(fields!=null){
-                for (String key : fields.keySet()) {
-                    names.add(key);
-                    Class clazz = fields.get(key);
-                    //如果是json类型，则传入string类型
-                    if(JSON.class.isAssignableFrom(clazz)){
-                        clazz = String.class;
-                    }
-                    types.add(typeFactory.createJavaType(clazz));
-                }
-                return typeFactory.createStructType(Pair.zip(names, types));
-            }
-            //没传field的情况
-            JSONObject jsonobj = jsonarr.getJSONObject(0);
-            for (String key : jsonobj.keySet()) {
-                final RelDataType type;
-                Object value = jsonobj.get(key);
-                Class clazz = null;
-                if(value instanceof JSON){
-                    clazz = String.class;
-                }else {
-                    clazz = value.getClass();
-                }
-                type = typeFactory.createJavaType(clazz);
-                names.add(key);
-                types.add(type);
-            }
-            if (names.isEmpty()) {
-                names.add("line");
-                types.add(typeFactory.createJavaType(String.class));
-            }
-            return typeFactory.createStructType(Pair.zip(names, types));
-        }
-
-        @Override
-        public Statistic getStatistic() {
-            return Statistics.UNKNOWN;
-        }
-
-        @Override
-        public Enumerable<Object[]> scan(DataContext root) {
-            return new AbstractEnumerable<Object[]>() {
-                @Override
-                public Enumerator<Object[]> enumerator() {
-                    return new JsonEnumerator(jsonarr,fields);
-                }
-            };
-        }
-    }
-
-    public static class JsonEnumerator implements Enumerator<Object[]> {
-
-        private Enumerator<Object[]> enumerator;
-
-        public JsonEnumerator(JSONArray jsonarr) {
-            List<Object[]> objs = new ArrayList<Object[]>();
-            for (Object obj : jsonarr) {
-                objs.add(((JSONObject) obj).values().toArray());
-            }
-            enumerator = Linq4j.enumerator(objs);
-        }
-
-        public JsonEnumerator(JSONArray jsonarr,LinkedHashMap<String,Class<?>> fields) {
-            List<Object[]> objs = new ArrayList<Object[]>();
-
-            for (Object obj : jsonarr) {
-                JSONObject jsonObject = (JSONObject) obj;
-                Object[] objects = new Object[fields.size()];
-                int i = 0;
-                for (String key : fields.keySet()) {
-                    objects[i] = jsonObject.get(key);
-                    // objects[i]= jsonObject.computeIfAbsent(key,k->"");
-                    i++;
-                }
-                objs.add(objects);
-                //objs.add(((JSONObject) obj).values().toArray());
-            }
-            enumerator = Linq4j.enumerator(objs);
-        }
-
-        @Override
-        public Object[] current() {
-            return (Object[]) enumerator.current();
-        }
-
-        @Override
-        public boolean moveNext() {
-            return enumerator.moveNext();
-        }
-
-        @Override
-        public void reset() {
-            enumerator.reset();
-        }
-
-        @Override
-        public void close() {
-            enumerator.close();
-        }
-
     }
 }

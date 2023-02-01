@@ -40,14 +40,14 @@ public class SQLConfig {
 
     private Connection connection;
 
-    private LinkedHashMap<String,Class<?>> fields;
+    private LinkedHashMap<String,Object> fields;
 
 
     public SQLConfig(String sql, String table) throws SQLException, SqlParseException {
         this(sql,table,null);
     }
 
-    public SQLConfig(String sql, String table, LinkedHashMap<String,Class<?>> fields) throws SQLException, SqlParseException {
+    public SQLConfig(String sql, String table, LinkedHashMap<String,Object> fields) throws SQLException, SqlParseException {
         // 把mysql语法的sql转成calcite的语法
         this.sql = SQLUtils.changeSQL2StandardCalciteSQL(sql);
         this.fields = fields;
