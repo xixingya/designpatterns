@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 public class UdfDemo {
     public static void main(String[] args) throws SqlParseException, SQLException {
 
-        LinkedHashMap<String,Class<?>> fields = new LinkedHashMap<>();
+        LinkedHashMap<String,Object> fields = new LinkedHashMap<>();
         fields.put("uid",String.class);
         fields.put("roomTag",String.class);
         fields.put("roomStatus",String.class);

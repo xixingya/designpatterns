@@ -7,6 +7,7 @@ import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.avatica.util.Quoting;
 import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.ScannableTable;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.ddl.SqlColumnDeclaration;
@@ -16,6 +17,12 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl;
 import org.apache.calcite.sql.parser.impl.SqlParserImpl;
+import tech.xixing.datasync.adapter.JsonSchema;
+import tech.xixing.datasync.adapter.JsonTable;
+import tech.xixing.sql.parser.ddl.SqlCreateTable;
+import tech.xixing.sql.parser.ddl.SqlTableColumn;
+import tech.xixing.sql.parser.extend.CreateSqlParserImpl;
+import tech.xixing.sql.parser.type.SqlTypeNameSpec2Type;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,8 +35,8 @@ import java.util.Set;
  */
 public class SQLUtils {
 
-    public static LinkedHashMap<String,Class<?>> getFieldsByJSONObject(String json){
-        LinkedHashMap<String,Class<?>> fields = new LinkedHashMap<>();
+    public static LinkedHashMap<String,Object> getFieldsByJSONObject(String json){
+        LinkedHashMap<String,Object> fields = new LinkedHashMap<>();
         JSONObject jsonObject = JSONObject.parseObject(json);
         Set<String> keySet = jsonObject.keySet();
         for (String key : keySet) {
@@ -55,20 +62,26 @@ public class SQLUtils {
         return sqlNode.toSqlString(CalciteSqlDialect.DEFAULT).getSql();
     }
 
-    public static ScannableTable getTableByCreateSql(String sql) throws SqlParseException {
-        SqlParser.Config config = SqlParser.config().withLex(Lex.MYSQL).withParserFactory(SqlDdlParserImpl.FACTORY);
+    public static LinkedHashMap<String,Object> getTableByCreateSql(String sql) throws SqlParseException {
+        SqlParser.Config config = SqlParser.config().withLex(Lex.MYSQL).withParserFactory(CreateSqlParserImpl.FACTORY);
         SqlParser sqlParser = SqlParser.create(sql, config);
 
         SqlNode sqlNode = sqlParser.parseStmt();
-        SqlKind kind = sqlNode.getKind();
-        switch (kind){
-            case CREATE_TABLE:
-                handleCreate(sqlNode);
-                break;
-            default:
-                break;
+        if(!(sqlNode instanceof SqlCreateTable)){
+            return null;
         }
-        return null;
+        SqlCreateTable sqlCreateTable = (SqlCreateTable)sqlNode;
+
+        SqlNodeList columnList = sqlCreateTable.getColumnList();
+
+        LinkedHashMap<String,Object> fields = new LinkedHashMap<>();
+        for (SqlNode node : columnList) {
+            SqlTableColumn sqlTableColumn = (SqlTableColumn)node;
+            String name = sqlTableColumn.getName().toString();
+            SqlTypeNameSpec typeNameSpec = sqlTableColumn.getType().getTypeNameSpec();
+            fields.put(name,typeNameSpec);
+        }
+        return fields;
     }
 
     private static void handleCreate(SqlNode sqlNode){
@@ -93,8 +106,8 @@ public class SQLUtils {
 
     public static void main(String[] args) throws SqlParseException {
         getTableByCreateSql("CREATE TABLE ods_kafka_student_scores (\n" +
-                "  `name` varchar,\n" +
-                "  `list` `ARRAY<ROW<course STRING,score INT>>`\n" +
+                "  `name` ROW<course STRING,score INT>,\n" +
+                "  `list` ARRAY<ROW<course STRING,score INT>>\n" +
                 ")");
     }
 }

@@ -40,7 +40,7 @@ class SQLTransformerTest {
 //        fields.put("sourceFrom",String.class);
 //        fields.put("roomId",String.class);
 //        fields.put("ext",String.class);
-        LinkedHashMap<String,Class<?>> fields = SQLUtils.getFieldsByJSONObject("{\n" +
+        LinkedHashMap<String,Object> fields = SQLUtils.getFieldsByJSONObject("{\n" +
                 "    \"roomTag\": \"传奇王者\",\n" +
                 "    \"ext\": {\n" +
                 "      \"status\": 1\n" +
@@ -228,9 +228,35 @@ class SQLTransformerTest {
 
     @Test
     void testUnnest()throws Exception{
-        String sql = "select name,desc, cat, uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test left join unnest(`list`) as t(name,desc) on true";
-        transform(sql);
+        String sqlSe = "select type,roomTag from kafka.test left join unnest(`list`) as t(type) on true";
+        String sql = "create table a(roomTag string,ext MAP<STRING,STRING>, list ARRAY<MAP<STRING,STRING>>)";
+        String table = "test";
+        LinkedHashMap<String, Object> fields = SQLUtils.getTableByCreateSql(sql);
+
+        SQLConfig sqlConfig = new SQLConfig(sqlSe, table, fields);
+
+        SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
+
+        List<JSONObject> transform = sqlTransformer.transform("[{\"roomTag\":\"\",\"ext\":{\"status\":1,\"f1\":\"10086\"},\"catTeamDesc\":\"不限/娱乐局/不限/四排\",\"list\":[{\"name\":\"qaq1\",\"desc\":\"hello\"},{\"name\":\"wang1\",\"desc\":\"world\"},{\"name\":\"li1\",\"desc\":\"good\"}],\"teamChatId\":\"0\",\"roomId\":\"2240b926d30d4431bb9f9cb92fdd568b\",\"uid\":\"558\",\"roomStatus\":\"1\",\"catId\":\"412592068762796032\",\"catName\":\"和平精英\",\"appId\":\"10\",\"varTimeStamp\":\"1672750860186\",\"roomTitle\":\"\uD83C\uDF38王者吃\uD83D\uDC14战神哥车队\uD83D\uDCB0\uD83D\uDCB0双区有号\",\"sourceFrom\":\"0\"}]");
+
+        System.out.println(transform);
     }
 
+    @Test
+    void testCreate()throws Exception{
+        String sql = "create table a(roomTag string,ext MAP<STRING,STRING>, list ARRAY<MAP<STRING,STRING>>)";
+        String table = "test";
+        LinkedHashMap<String, Object> fields = SQLUtils.getTableByCreateSql(sql);
+
+        SQLConfig sqlConfig = new SQLConfig("select roomTag,ext from kafka.test", table, fields);
+
+        SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
+
+        List<JSONObject> transform = sqlTransformer.transform("[{\"roomTag\":\"\",\"ext\":{\"status\":1,\"f1\":\"10086\"},\"catTeamDesc\":\"不限/娱乐局/不限/四排\",\"list\":[{\"name\":\"qaq1\",\"desc\":\"hello\"},{\"name\":\"wang1\",\"desc\":\"world\"},{\"name\":\"li1\",\"desc\":\"good\"}],\"teamChatId\":\"0\",\"roomId\":\"2240b926d30d4431bb9f9cb92fdd568b\",\"uid\":\"558\",\"roomStatus\":\"1\",\"catId\":\"412592068762796032\",\"catName\":\"和平精英\",\"appId\":\"10\",\"varTimeStamp\":\"1672750860186\",\"roomTitle\":\"\uD83C\uDF38王者吃\uD83D\uDC14战神哥车队\uD83D\uDCB0\uD83D\uDCB0双区有号\",\"sourceFrom\":\"0\"}]");
+
+        System.out.println(transform);
+        // sqlConfig.execute("[{\"roomTag\":\"\",\"ext\":{\"status\":1},\"catTeamDesc\":\"不限/娱乐局/不限/四排\",\"list\":[{\"name\":\"qaq1\",\"desc\":\"hello\"},{\"name\":\"wang1\",\"desc\":\"world\"},{\"name\":\"li1\",\"desc\":\"good\"}],\"teamChatId\":\"0\",\"roomId\":\"2240b926d30d4431bb9f9cb92fdd568b\",\"uid\":\"558\",\"roomStatus\":\"1\",\"catId\":\"412592068762796032\",\"catName\":\"和平精英\",\"appId\":\"10\",\"varTimeStamp\":\"1672750860186\",\"roomTitle\":\"\uD83C\uDF38王者吃\uD83D\uDC14战神哥车队\uD83D\uDCB0\uD83D\uDCB0双区有号\",\"sourceFrom\":\"0\"}]");
+
+    }
 
 }
