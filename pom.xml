@@ -18,7 +18,7 @@
         <java.version>1.8</java.version>
         <reactor.version>3.4.19</reactor.version>
         <elasticsearch.version>7.1.0</elasticsearch.version>
-        <calcite.version>1.30.0</calcite.version>
+        <calcite.version>1.32.0</calcite.version>
     </properties>
 
     <dependencies>
