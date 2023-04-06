@@ -14,7 +14,7 @@ public class ObjectUtil {
     }
 
     public static Map<String, String> stringToMap(String data, String split) {
-        data = data.substring(1, data.length() - 1);
+        data = data.substring(1, data.length()  - 1);
         String[] items = data.split(split);
         Map<String, String> resultMap = new HashMap<>();
         for (String item : items) {
