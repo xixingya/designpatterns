@@ -17,8 +17,8 @@ public class ObjectUtil {
         data = data.substring(1, data.length()  - 1);
         String[] items = data.split(split);
         Map<String, String> resultMap = new HashMap<>();
-        for (String item : items) {
-            String[] b = item.split("=");
+        for (String item1 : items) {
+            String[] b = item1.split("=");
             resultMap.put(b[0], b[1]);
         }
         return resultMap;
