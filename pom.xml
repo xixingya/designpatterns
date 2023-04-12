@@ -73,6 +73,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-file</artifactId>
+            <version>${calcite.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-server</artifactId>
             <version>${calcite.version}</version>
         </dependency>
@@ -187,6 +192,11 @@
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>3.29.2-GA</version>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.14.0</version>
         </dependency>
 
     </dependencies>

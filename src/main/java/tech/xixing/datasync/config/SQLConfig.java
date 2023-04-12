@@ -63,6 +63,7 @@ public class SQLConfig {
                 "  \"createTime\": \"1673280060428\",\n" +
                 "  \"state\": \"1\"\n" +
                 "}",fields);
+        org.apache.calcite.schema.Table table1 =  jsonSchema.getTable(table);
         rootSchema.add("kafka", jsonSchema);
         // 获取被注解的udf
         Set<UdfConfig> udfByTable = UdfFactory.getUdfByTable(table);
