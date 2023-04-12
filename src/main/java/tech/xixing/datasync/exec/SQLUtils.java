@@ -1,6 +1,7 @@
 package tech.xixing.datasync.exec;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableSet;
 import org.apache.calcite.avatica.util.Casing;
@@ -46,13 +47,35 @@ public class SQLUtils {
         return fields;
     }
 
+    public static String transformSqlByJsonObj(String json,String tableName){
+        JSONObject jsonObject = JSONObject.parseObject(json);
+        StringBuilder sb = new StringBuilder();
+        sb.append("create table ").append(tableName).append("(").append("\n");
+        Set<String> keySet = jsonObject.keySet();
+        for (String key : keySet) {
+            Object value = jsonObject.get(key);
+            Class<?> aClass = value.getClass();
+            String type = aClass.getSimpleName();
+
+            if(JSONArray.class.isAssignableFrom(aClass)){
+                type="ARRAY<STRING>";
+            }
+            if(JSONObject.class.isAssignableFrom(aClass)){
+                type="MAP<STRING,STRING>";
+            }
+            sb.append(key).append(" ").append(type).append(",").append("\n");
+        }
+        String substring = sb.substring(0, sb.length()-2);
+        return substring+"\n)";
+    }
+
     public static String changeSQL2StandardCalciteSQL(String sql) throws SqlParseException {
-//        SqlParser.Config config = SqlParser.config().
-//                withQuoting(Quoting.BACK_TICK)
-//                .withQuotedCasing(Casing.UNCHANGED)
-//                .withUnquotedCasing(Casing.UNCHANGED);
+        SqlParser.Config config = SqlParser.config().
+                withQuoting(Quoting.BACK_TICK)
+                .withQuotedCasing(Casing.UNCHANGED)
+                .withUnquotedCasing(Casing.UNCHANGED);
         // 使用mysql语法去解析sql
-        SqlParser.Config config = SqlParser.config().withLex(Lex.MYSQL);
+        // SqlParser.Config config = SqlParser.config().withLex(Lex.MYSQL);
 
         SqlParser sqlParser = SqlParser.create(sql, config);
         SqlNode sqlNode = sqlParser.parseQuery();
@@ -105,9 +128,33 @@ public class SQLUtils {
     }
 
     public static void main(String[] args) throws SqlParseException {
-        getTableByCreateSql("CREATE TABLE ods_kafka_student_scores (\n" +
-                "  `name` ROW<course STRING,score INT>,\n" +
-                "  `list` ARRAY<ROW<course STRING,score INT>>\n" +
-                ")");
+//        getTableByCreateSql("CREATE TABLE ods_kafka_student_scores (\n" +
+//                "  `name` ROW<course STRING,score INT>,\n" +
+//                "  `list` ARRAY<ROW<course STRING,score INT>>\n" +
+//                ")");
+        String table1 = transformSqlByJsonObj("{\n" +
+                "    \"roomTag\": \"传奇王者\",\n" +
+                "    \"ext\": {\n" +
+                "      \"status\": 1\n" +
+                "    },\n" +
+                "    \"list\": [{\"name\": \"qaq\",\"desc\": \"hello\"},{\"name\": \"wang\",\"desc\": \"world\"},{\"desc\": \"good\",\"name\": \"li\"}],\n" +
+                "    \"catTeamDesc\": \"不限/娱乐局/不限/五排\",\n" +
+                "    \"teamChatId\": \"0\",\n" +
+                "    \"roomId\": \"0167944df1424738a34051940268d17c\",\n" +
+                "    \"uid\": \"223\",\n" +
+                "    \"roomStatus\": \"1\",\n" +
+                "    \"catId\": \"8efb76c4477637c4c70352b8ce2be686\",\n" +
+                "    \"catName\": \"王者荣耀\",\n" +
+                "    \"appId\": \"10\",\n" +
+                "    \"varTimeStamp\": \"1672742306444\",\n" +
+                "    \"roomTitle\": \"巅峰2500 技术 98胜 车队\",\n" +
+                "    \"sourceFrom\": \"0\"\n" +
+                "  }", "table1");
+
+        LinkedHashMap<String, Object> fields = getTableByCreateSql(table1);
+
+
+        System.out.println(table1);
+
     }
 }
