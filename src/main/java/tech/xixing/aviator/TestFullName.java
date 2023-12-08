@@ -22,5 +22,7 @@ public class TestFullName {
         expr.execute(input);
         System.out.println(input);
 
+        System.out.println(AviatorEvaluator.execute("seq.list()",null,true));
+
     }
 }
