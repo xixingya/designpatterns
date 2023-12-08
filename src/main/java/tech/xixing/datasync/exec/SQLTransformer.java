@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
+import org.apache.calcite.sql.ExtendedSqlRowTypeNameSpec;
 import tech.xixing.datasync.config.SQLConfig;
 
 import java.sql.ResultSet;
@@ -31,20 +32,26 @@ public class SQLTransformer {
         List<JSONObject> res = new ArrayList<>();
         try{
             ResultSet resultSet = sqlConfig.getStatement().executeQuery();
-            LinkedHashMap<String, Class<?>> fields = sqlConfig.getFields();
+            LinkedHashMap<String, Object> fields = sqlConfig.getFields();
             while (resultSet.next()) {
                 JSONObject jo = new JSONObject();
                 int n = resultSet.getMetaData().getColumnCount();
                 for (int i = 1; i <= n; i++) {
                     String columnName = resultSet.getMetaData().getColumnName(i);
-                    Class<?> aClass = fields.get(columnName);
+                    Object type = fields.get(columnName);
                     Object object = resultSet.getObject(i);
-                    if(JSONObject.class.equals(aClass)&&object!=null){
-                        object = JSONObject.parseObject(object.toString());
+                    if(type instanceof Class){
+                        Class<?> aClass = (Class<?>) type;
+                        if(JSONObject.class.equals(aClass)&&object!=null){
+                            object = JSONObject.parseObject(object.toString());
+                        }
+                        if(JSONArray.class.equals(aClass)&&object!=null){
+                            object = JSONObject.parseArray(object.toString());
+                        }
+                    }else if(type instanceof ExtendedSqlRowTypeNameSpec){
+                        object = resultSet.getObject(i);
                     }
-                    if(JSONArray.class.equals(aClass)&&object!=null){
-                        object = JSONObject.parseArray(object.toString());
-                    }
+
                     jo.put(resultSet.getMetaData().getColumnLabel(i), object);
                 }
                 res.add(jo);

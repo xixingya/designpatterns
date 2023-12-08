@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import tech.xixing.datasync.anno.EnableCustomUdf;
 import tech.xixing.datasync.config.SQLConfig;
@@ -22,11 +23,11 @@ class SQLTransformerTest {
     @Test
     void testCommon() throws SQLException, SqlParseException {
         String sql = "select * from kafka" + ".test where sourceFrom = 0 and appId = 10";
-        transform(sql);
+        transform(sql,true);
     }
 
     @Test
-    public static void transform(String sql) throws SQLException, SqlParseException {
+    public static void transform(String sql,boolean isNew) throws SQLException, SqlParseException {
         String table = "test";
         // 需要固定字段位置，以免缺少的情况会导致PreparedStatement报错。
 //        LinkedHashMap<String,Class> fields = new LinkedHashMap<>();
@@ -40,7 +41,8 @@ class SQLTransformerTest {
 //        fields.put("sourceFrom",String.class);
 //        fields.put("roomId",String.class);
 //        fields.put("ext",String.class);
-        LinkedHashMap<String,Class<?>> fields = SQLUtils.getFieldsByJSONObject("{\n" +
+        LinkedHashMap<String, Object> fields = null;
+        fields = SQLUtils.getFieldsByJSONObject("{\n" +
                 "    \"roomTag\": \"传奇王者\",\n" +
                 "    \"ext\": {\n" +
                 "      \"status\": 1\n" +
@@ -59,6 +61,27 @@ class SQLTransformerTest {
                 "    \"sourceFrom\": \"0\"\n" +
                 "  }");
 
+        if(isNew){
+            String table1 = SQLUtils.transformSqlByJsonObj("{\n" +
+                    "    \"roomTag\": \"传奇王者\",\n" +
+                    "    \"ext\": {\n" +
+                    "      \"status\": 1\n" +
+                    "    },\n" +
+                    "    \"list\": [{\"name\": \"qaq\",\"desc\": \"hello\"},{\"name\": \"wang\",\"desc\": \"world\"},{\"desc\": \"good\",\"name\": \"li\"}],\n" +
+                    "    \"catTeamDesc\": \"不限/娱乐局/不限/五排\",\n" +
+                    "    \"teamChatId\": \"0\",\n" +
+                    "    \"roomId\": \"0167944df1424738a34051940268d17c\",\n" +
+                    "    \"uid\": \"223\",\n" +
+                    "    \"roomStatus\": \"1\",\n" +
+                    "    \"catId\": \"8efb76c4477637c4c70352b8ce2be686\",\n" +
+                    "    \"catName\": \"王者荣耀\",\n" +
+                    "    \"appId\": \"10\",\n" +
+                    "    \"varTimeStamp\": \"1672742306444\",\n" +
+                    "    \"roomTitle\": \"巅峰2500 技术 98胜 车队\",\n" +
+                    "    \"sourceFrom\": \"0\"\n" +
+                    "  }", "test");
+            fields = SQLUtils.getTableByCreateSql(table1);
+        }
         SQLConfig sqlConfig = new SQLConfig(sql, table, fields);
         SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
         sqlTransformer.registerUdf("aviator_func", AviatorUdf.class);
@@ -113,7 +136,7 @@ class SQLTransformerTest {
                 "    \"sourceFrom\": \"0\"\n" +
                 "  }\n" +
                 "]");
-        System.out.println("use time ="+(System.currentTimeMillis()-l));
+        System.out.println("use time =" + (System.currentTimeMillis()-l));
         System.out.println(res);
 
         long l2 = System.currentTimeMillis();
@@ -201,14 +224,14 @@ class SQLTransformerTest {
 
         String sql = "select `sourceFrom`,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
         String sql2 = "select * from kafka.test";
-        transform(sql2);
+        transform(sql2,true);
        // System.out.println(JSON.class.isAssignableFrom(JSONObject.class));
 
     }
 
     @Test
     void testSqlChange() throws SqlParseException {
-        String sql = "select `sourceFrom`,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
+        String sql = "select * from kafka.aaa.bbb where uid <> 0";
         String s = SQLUtils.changeSQL2StandardCalciteSQL(sql);
         // transform(s);
         System.out.println(s);
@@ -216,21 +239,64 @@ class SQLTransformerTest {
 
     @Test
     void testAviatorUdf() throws Exception{
-        String sql = "select uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test where sourceFrom = 0 and appId = 10 and JSON_VALUE(ext,'$.status')=1";
-        transform(sql);
+        String sql = "select uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp from kafka.test where sourceFrom = 0";
+        transform(sql,false);
     }
 
     @Test
     void testUdtf()throws Exception{
         String sql = "select cat, uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test left join lateral table(test_split(`catTeamDesc`,'/')) as t(cat) on true";
-        transform(sql);
+        transform(sql,false);
     }
 
     @Test
     void testUnnest()throws Exception{
-        String sql = "select name,desc, cat, uid, `sourceFrom`,aviator_func(ext,'seq.map(\"uid\",123,\"status\",status)') as temp ,JSON_VALUE(ext,'$.status') as status from kafka.test left join unnest(`list`) as t(name,desc) on true";
-        transform(sql);
+        String sqlSe = "select type,roomTag from kafka.test left join unnest(`list`) as t(type) on true";
+        String sql = "create table a(roomTag string,ext MAP<STRING,STRING>, list ARRAY<MAP<STRING,STRING>>)";
+        String table = "test";
+        LinkedHashMap<String, Object> fields = SQLUtils.getTableByCreateSql(sql);
+
+        SQLConfig sqlConfig = new SQLConfig(sqlSe, table, fields);
+
+        SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
+
+        List<JSONObject> transform = sqlTransformer.transform("[{\"roomTag\":\"\",\"ext\":{\"status\":1,\"f1\":\"10086\"},\"catTeamDesc\":\"不限/娱乐局/不限/四排\",\"list\":[{\"name\":\"qaq1\",\"desc\":\"hello\"},{\"name\":\"wang1\",\"desc\":\"world\"},{\"name\":\"li1\",\"desc\":\"good\"}],\"teamChatId\":\"0\",\"roomId\":\"2240b926d30d4431bb9f9cb92fdd568b\",\"uid\":\"558\",\"roomStatus\":\"1\",\"catId\":\"412592068762796032\",\"catName\":\"和平精英\",\"appId\":\"10\",\"varTimeStamp\":\"1672750860186\",\"roomTitle\":\"\uD83C\uDF38王者吃\uD83D\uDC14战神哥车队\uD83D\uDCB0\uD83D\uDCB0双区有号\",\"sourceFrom\":\"0\"}]");
+
+        System.out.println(transform);
     }
 
+    @Test
+    void testCreate()throws Exception{
+        String sql = "create table\n" +
+                "  YPP_PROFILE_OUT (\n" +
+                "    bizType string,\n" +
+                "    dataType string,\n" +
+                "    id string,\n" +
+                "    kv MAP < string,\n" +
+                "    string >\n" +
+                "  )";
+        String table = "YPP_PROFILE_OUT";
+        LinkedHashMap<String, Object> fields = SQLUtils.getTableByCreateSql(sql);
+
+        long l = System.currentTimeMillis();
+        SQLConfig sqlConfig = new SQLConfig("select t1.*, t2.*  from (select id as uid, kv['mvp_home_view'] as sql_mvp_home_view from kafka.YPP_PROFILE_OUT where bizType = 'ORDER' and dataType = 'targetUid' and kv['mvp_home_view'] is not null and kv['mvp_home_view']>2) as t1 right join unnest(dubbo_talent_cat(t1.uid)) as t2(cat_id,label_ids) on true", table, fields);
+
+        System.out.println("useTime="+(System.currentTimeMillis()-l));
+        SQLTransformer sqlTransformer = new SQLTransformer(sqlConfig);
+
+        List<JSONObject> transform = sqlTransformer.transform("[{\n" +
+                "  \"bizType\": \"ORDER\",\n" +
+                "  \"dataType\": \"targetUid\",\n" +
+                "  \"id\": \"12300\",\n" +
+                "  \"kv\": {\n" +
+                "    \"mvp_home_view\": \"3\"\n" +
+                "  },\n" +
+                "  \"ts\": \"1676254860000\"\n" +
+                "}]");
+
+        System.out.println(transform);
+        // sqlConfig.execute("[{\"roomTag\":\"\",\"ext\":{\"status\":1},\"catTeamDesc\":\"不限/娱乐局/不限/四排\",\"list\":[{\"name\":\"qaq1\",\"desc\":\"hello\"},{\"name\":\"wang1\",\"desc\":\"world\"},{\"name\":\"li1\",\"desc\":\"good\"}],\"teamChatId\":\"0\",\"roomId\":\"2240b926d30d4431bb9f9cb92fdd568b\",\"uid\":\"558\",\"roomStatus\":\"1\",\"catId\":\"412592068762796032\",\"catName\":\"和平精英\",\"appId\":\"10\",\"varTimeStamp\":\"1672750860186\",\"roomTitle\":\"\uD83C\uDF38王者吃\uD83D\uDC14战神哥车队\uD83D\uDCB0\uD83D\uDCB0双区有号\",\"sourceFrom\":\"0\"}]");
+
+    }
 
 }

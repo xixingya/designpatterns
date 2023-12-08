@@ -1,5 +1,8 @@
 package tech.xixing.aviator;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author liuzhifei
  * @date 2022/7/18 10:51 上午
@@ -19,5 +22,16 @@ public enum TestEnum {
     TestEnum(Integer status, String desc){
         this.status = status;
         this.desc = desc;
+    }
+
+    public static void main(String[] args) {
+        Map<String,StringBuilder> map =new HashMap<>();
+        StringBuilder stringBuilder = map.computeIfAbsent("a", key -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            return sb;
+        });
+        stringBuilder.append("]");
+        System.out.println(map);
     }
 }
