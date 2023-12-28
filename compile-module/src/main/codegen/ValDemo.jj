@@ -1,0 +1,62 @@
+/* adder.jj Adding up numbers */
+options {
+    STATIC = false ;
+    }
+
+PARSER_BEGIN(AdderValidate)
+    package tech.xixing.compile.val.demo;
+    import java.io.StringReader;
+    class AdderValidate {
+        public static boolean validate(String exp) {
+            try{
+                AdderValidate parser = new AdderValidate( new StringReader(exp) );
+                parser.Start();
+            }catch (Exception e){
+                return false;
+            }
+            return true;
+        }
+        public static void main( String[] args ) throws ParseException, TokenMgrError {
+            validate("1+1");
+        }
+    }
+PARSER_END(AdderValidate)
+
+SKIP : { " "}
+SKIP : { "\n" | "\r" | "\r\n" }
+TOKEN : { < PLUS : "+" > }
+TOKEN : { < NUMBER : (["0"-"9"])+ > }
+TOKEN : { <IDF: (["a"-"z","A"-"Z"])+ >}
+
+void Start() :
+{}
+{
+    <NUMBER>
+    (
+        <PLUS>
+        <NUMBER>
+    )*
+    <EOF>
+}
+int expr() :
+{
+ Token t;
+ int result = 0;
+}
+{
+    t = <NUMBER> 
+    {
+      result = Integer.parseInt(t.image);
+    }
+    (
+            <PLUS>
+            t = <NUMBER>
+            {
+                result = result +Integer.parseInt(t.image);
+            }
+    )*
+    {
+        return result;
+    }
+    <EOF>
+}
