@@ -62,7 +62,7 @@ TOKEN : {
 }
 
 TOKEN : {
- <STR: (<DIGITS> | <LETTER> | ".")* >
+ <STR: <DIGITS> | <LETTER> (<DIGITS> | <LETTER> | ".")* >
 }
  
  
@@ -164,7 +164,8 @@ ZcResult element():
 }
 {
    v = calc() {return new ZcResult(v);}   //匹配数字四则
-  | <SINGLE_QUOT> t =  <ID> <SINGLE_QUOT> {return new ZcResult(t.image);} //匹配'字符串'
+  | <SINGLE_QUOT> t =  <STR> <SINGLE_QUOT> {return new ZcResult(t.image);} //匹配'字符串'
+  | t= <ID> {return new ZcResult(zpContext.getVariable(t.image));}
 }
  
  

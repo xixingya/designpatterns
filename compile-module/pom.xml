@@ -51,6 +51,7 @@
                     </includes>
                     <lookAhead>2</lookAhead>
                     <isStatic>false</isStatic>
+                    <forceLaCheck>true</forceLaCheck>
                 </configuration>
             </plugin>
         </plugins>

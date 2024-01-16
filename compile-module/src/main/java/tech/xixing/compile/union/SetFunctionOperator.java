@@ -50,6 +50,10 @@ public class SetFunctionOperator implements ZcOperator<Object> {
                 //注意sfp.operator()会进行递归运算
                 list.add(sfp.operator().getData());
             }
+            if (op instanceof StringOperator) {
+                StringOperator strOp = (StringOperator) op;
+                list.add(strOp.operator().getData());
+            }
         }
 
 
@@ -59,28 +63,28 @@ public class SetFunctionOperator implements ZcOperator<Object> {
             //进行union（并）操作
             case 1:
                 if (list.size() > 2) {
-                    set = CollUtil.unionDistinct((Collection)list.get(0), (Collection)list.get(1),
+                    set = CollUtil.unionDistinct((Collection) list.get(0), (Collection) list.get(1),
                             list.subList(2, list.size()).toArray(new Set[0]));
                 } else {
-                    set = CollUtil.unionDistinct((Collection)list.get(0), (Collection)list.get(1));
+                    set = CollUtil.unionDistinct((Collection) list.get(0), (Collection) list.get(1));
                 }
                 break;
             //进行intersection（交）操作
             case 2:
                 if (list.size() > 2) {
-                    set = CollUtil.intersectionDistinct((Collection)list.get(0), (Collection)list.get(1),
+                    set = CollUtil.intersectionDistinct((Collection) list.get(0), (Collection) list.get(1),
                             list.subList(2, list.size()).toArray(new Set[0]));
                 } else {
-                    set = CollUtil.intersectionDistinct((Collection)list.get(0), (Collection)list.get(1));
+                    set = CollUtil.intersectionDistinct((Collection) list.get(0), (Collection) list.get(1));
                 }
                 break;
             //进行subtract（差）操作
             case 3:
-                set = (Set) CollUtil.subtract((Collection)list.get(0), (Collection)list.get(1));
+                set = (Set) CollUtil.subtract((Collection) list.get(0), (Collection) list.get(1));
                 break;
             // 包含运算，即第一个是set第二个是数字
             case 4:
-                return new ZcResult<>(CollUtil.contains((Collection) list.get(0),list.get(1)));
+                return new ZcResult<>(CollUtil.contains((Collection) list.get(0), list.get(1)));
 
         }
 
