@@ -1,3 +1,5 @@
+package tech.xixing.elasticsearch.struct;
+
 import java.util.*;
 
 public class TowNodeBKDTree {

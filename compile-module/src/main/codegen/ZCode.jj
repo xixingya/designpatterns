@@ -1,0 +1,257 @@
+options{
+     STATIC = false;
+     JDK_VERSION = "1.8";
+ 
+}
+PARSER_BEGIN(Zcode)
+package tech.xixing.compile.union;
+import tech.xixing.compile.union.*;
+import java.io.StringReader;
+import java.util.*;
+ 
+public class Zcode {
+    ZpContext zpContext;
+    public Zcode(String expr){
+         this(new StringReader(expr));
+         zpContext = new ZpContext();
+    }
+ 
+}
+ 
+ 
+PARSER_END(Zcode)
+ 
+ 
+SKIP : { " " | "\t" | "\n" }
+ 
+TOKEN : {
+    <NUMBER : <DIGITS>
+      | <DIGITS> "." <DIGITS>
+     >
+  |
+    <#DIGITS :(["0"-"9"])+>
+}
+ 
+TOKEN : {
+     < LPAREN: "(" >
+   | < RPAREN: ")" >
+   | < LBPAREN: "{">
+   | < RBPAREN: "}">
+   | < ADD : "+" >
+   | < SUBTRACT : "-" >
+   | < MULTIPLY : "*" >
+   | < DIVIDE : "/" >
+   | < EQUALS : "=">
+   | < COMMA : ",">
+   | < SEMIC : ";">
+   | < SINGLE_QUOT : "'">
+ 
+   |< UNION : "UNION" | "union">
+   |< INTERSECT : "INTERSECT"| "intersect">
+   |< SET_SUB : "SUBTRACT" | "subtract">
+   |< CONTAINS : "CONTAINS" | "contains">
+ 
+   |<PRINT : "PRINT" | "print">
+   |<PRINTLN : "PRINTLN" | "println">
+ 
+}
+TOKEN : { < EOL : "\n" | "\r" | "\r\n" > }
+ 
+TOKEN : {
+<ID : <LETTER> (<DIGITS>|<LETTER>)*>
+}
+
+TOKEN : {
+ <STR: <DIGITS> | <LETTER> (<DIGITS> | <LETTER> | ".")* >
+}
+ 
+ 
+ 
+TOKEN : { < # LETTER : (["_",
+                         "~",
+                         "a"-"z","A"-"Z"])+ > }
+//脚本解析入口
+void  parse():
+{
+ 
+ }
+{
+  (
+      LOOKAHEAD(2,<ID> <EQUALS>)
+       assignExp() <SEMIC>  //赋值表达式
+    | printFunction() <SEMIC> //打印函数
+  )+ //脚本中包含多条赋值表达和打印函数，每条都以“;”结尾 作为区分
+ 
+ 
+}
+//打印函数
+void printFunction():
+{
+  int flag;
+  //打印目标
+  Object target = null;
+  Token vt;
+}
+{
+    (
+      <PRINT> {flag=1;}
+    | <PRINTLN>{flag=2;}
+    )
+      <LPAREN>
+      (
+       vt = <ID> {target = zpContext.getVariable(vt.image);} //变量
+       | target = calc() //四则运算
+       | target = defineSets() //集合定义
+       | target = setOperFunciton() //集合运算函数
+      )
+      <RPAREN>
+    {
+        PrintOperator print = new PrintOperator(flag,target);
+        print.operator();
+     }
+}
+ 
+//赋值表达式
+void assignExp():
+{
+   Token t;
+   double v;
+   String str;
+   ZcOperator operator = null;
+}
+{
+   t=<ID>
+        <EQUALS>
+      (
+         v = calc() {zpContext.putVariable(t.image,v);}
+       | operator = setOperFunciton() {zpContext.putVariable(t.image,operator);}
+       | operator = defineSets() {zpContext.putVariable(t.image,operator);}
+       | str = getString() {zpContext.putVariable(t.image,new StringOperator(str));}
+      )
+ }
+//集合定义:{element,element.....} 或者{}
+ZcOperator defineSets():
+{
+    Set data = new LinkedHashSet();
+    ZcResult elem = null;
+}
+{
+   <LBPAREN>
+    (
+       elem = element() {data.add(elem.getData());}
+       (<COMMA>
+         elem = element() {data.add(elem.getData());}
+       )*
+    )*
+   <RBPAREN>
+   { return new SetOperator(data);}
+}
+
+String getString():
+{
+ Token t;
+  double v;
+}
+{
+    <SINGLE_QUOT> t =  <STR> <SINGLE_QUOT> {return t.image;} //匹配'字符串'
+}
+
+//集合元素定义
+ZcResult element():
+{
+  Token t;
+  double v;
+}
+{
+   v = calc() {return new ZcResult(v);}   //匹配数字四则
+  | <SINGLE_QUOT> t =  <STR> <SINGLE_QUOT> {return new ZcResult(t.image);} //匹配'字符串'
+  | t= <ID> {return new ZcResult(zpContext.getVariable(t.image));}
+}
+ 
+ 
+//解析集合操作函数
+ZcOperator setOperFunciton():
+{
+  int flag;
+  List<ZcOperator> pList = new ArrayList<ZcOperator>();
+  ZcOperator operator = null;
+}
+{
+  (<UNION> {flag=1;}
+   |<INTERSECT> {flag =2;}
+   |<SET_SUB> {flag =3;}
+   |<CONTAINS> {flag = 4;}
+  )
+     <LPAREN>
+          operator = setOperBase() {pList.add(operator);} //操作集合
+          (
+            <COMMA>
+            operator = setOperBase() {pList.add(operator);}
+          )+
+     <RPAREN>
+ 
+     { return new SetFunctionOperator(flag,pList,zpContext); }
+}
+//集合
+ZcOperator setOperBase():
+{
+    ZcOperator operator = null;
+    Token t;
+}
+{
+       operator = defineSets() {return operator;} //集合定义
+   |   t = <ID> { return zpContext.getVariable(t.image);} //集合赋值给的变量
+   |   operator = setOperFunciton() {return operator;} //集合操作函数
+}
+ 
+//解析一级树处理加减
+double calc():
+{
+ double left;
+ double right;
+ 
+}
+{
+  left = mutlOrDiv()
+ 
+ 
+  (<ADD>   right = mutlOrDiv() {left += right;}
+    | <SUBTRACT> right = mutlOrDiv() {left = left - right;}
+     )*
+ 
+  {
+     return left;
+   }
+}
+ 
+//解析二级树处理乘除
+double mutlOrDiv():
+{
+ double left;
+ double right;
+ 
+}
+{
+  left = parseBase()
+  (<MULTIPLY> right = parseBase() {left *= right ;}
+    | <DIVIDE> right = parseBase() {left = left/right;}
+     )*
+  {
+    return left;
+   }
+}
+ 
+//解析三级树
+double parseBase() :
+{
+ Token t = null;
+ double num;
+}
+{
+  t = <NUMBER> {return Double.parseDouble(t.image);}
+//处理括号里的四则
+ | <LPAREN> num = calc() <RPAREN> {return num;}
+ 
+}
+ 
+ 
