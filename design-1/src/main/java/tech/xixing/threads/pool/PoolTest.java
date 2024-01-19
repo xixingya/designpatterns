@@ -3,8 +3,7 @@ package tech.xixing.threads.pool;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.SneakyThrows;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -39,7 +38,7 @@ public class PoolTest {
                     System.out.println(Thread.currentThread().getName() + "-结果:" + num);
                 });
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println(e);
         }
 //        while (Thread.activeCount()>2){
@@ -48,4 +47,7 @@ public class PoolTest {
 //        threadPoolExecutor.shutdown();
         System.out.println("线程执行结束");
     }
+
+    
+
 }
