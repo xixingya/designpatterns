@@ -17,6 +17,8 @@
     <modules>
         <module>compile-module</module>
         <module>design-1</module>
+        <module>design-spring-study</module>
+<!--        <module>design-jdk21</module>-->
     </modules>
 
     <properties>
