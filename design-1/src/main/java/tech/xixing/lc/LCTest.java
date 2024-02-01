@@ -404,34 +404,34 @@ public class LCTest {
             } else if (num >= 500) {
                 sb.append(map.get(500));
                 num = num - 500;
-            }else if (num >= 400) {
+            } else if (num >= 400) {
                 sb.append(map.get(400));
                 num = num - 400;
-            }else if (num >= 100) {
+            } else if (num >= 100) {
                 sb.append(map.get(100));
                 num = num - 100;
-            }else if (num >= 90) {
+            } else if (num >= 90) {
                 sb.append(map.get(90));
                 num = num - 90;
-            }else if (num >= 50) {
+            } else if (num >= 50) {
                 sb.append(map.get(50));
                 num = num - 50;
-            }else if (num >= 40) {
+            } else if (num >= 40) {
                 sb.append(map.get(40));
                 num = num - 40;
-            }else if (num >= 10) {
+            } else if (num >= 10) {
                 sb.append(map.get(10));
                 num = num - 10;
-            }else if (num >= 9) {
+            } else if (num >= 9) {
                 sb.append(map.get(9));
                 num = num - 9;
-            }else if (num >= 5) {
+            } else if (num >= 5) {
                 sb.append(map.get(5));
                 num = num - 5;
-            }else if (num >= 4) {
+            } else if (num >= 4) {
                 sb.append(map.get(4));
                 num = num - 4;
-            }else if (num >= 1) {
+            } else if (num >= 1) {
                 sb.append(map.get(1));
                 num = num - 1;
             }
@@ -441,11 +441,43 @@ public class LCTest {
 
     public int lengthOfLastWord(String s) {
         String trim = s.trim();
-        return trim.length()-trim.lastIndexOf(" ")-1;
+        return trim.length() - trim.lastIndexOf(" ") - 1;
+    }
+
+    public static String convert(String s, int numRows) {
+        if(numRows==1){
+            return s;
+        }
+        List<StringBuilder> list = new ArrayList<>();
+        for (int i = 0; i < numRows; i++) {
+            list.add(new StringBuilder());
+        }
+
+        int index = 0;
+        boolean isAdd = true;
+        for (int i = 0; i < s.length(); i++) {
+            list.get(index).append(s.charAt(i));
+            if (index == numRows-1) {
+                isAdd = false;
+            }
+            if (index == 0) {
+                isAdd = true;
+            }
+            if(isAdd){
+                index++;
+            }else {
+                index--;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (StringBuilder stringBuilder : list) {
+            sb.append(stringBuilder);
+        }
+        return sb.toString();
     }
 
 
     public static void main(String[] args) {
-        System.out.println(romanToInt("LVIII"));
+        System.out.println(convert("PAYPALISHIRING",3));
     }
 }
