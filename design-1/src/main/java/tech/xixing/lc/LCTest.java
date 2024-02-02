@@ -511,18 +511,151 @@ public class LCTest {
         next[0] = -1;
         int j = -1;
         while (i < s.length()) {
-            if(j==-1||s.charAt(i)==s.charAt(j)){
+            if (j == -1 || s.charAt(i) == s.charAt(j)) {
                 i++;
                 j++;
                 next[i] = j;
-            }else {
+            } else {
                 j = next[j];
             }
         }
     }
 
+    public static List<String> fullJustify(String[] words, int maxWidth) {
+        List<String> res = new ArrayList<>();
+        List<String> temp = new ArrayList<>();
+        int tempLen = 0;
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (tempLen + word.length() + temp.size() > maxWidth) {
+                res.add(buildStr(temp, tempLen, maxWidth));
+                temp = new ArrayList<>();
+                temp.add(word);
+                tempLen = word.length();
+            } else {
+                temp.add(word);
+                tempLen = tempLen + word.length();
+            }
+        }
+        if (!temp.isEmpty()) {
+            res.add(buildStrLeft(temp, tempLen, maxWidth));
+        }
+        return res;
+    }
+
+    private static String buildStrLeft(List<String> temp, int tempLen, int maxWidth) {
+        int remained = maxWidth - tempLen;
+        if (temp.size() == 1) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < remained; i++) {
+                sb.append(" ");
+            }
+            return temp.get(0) + sb;
+        }
+
+        for (int i = 0; i < temp.size() - 1; i++) {
+            temp.set(i, temp.get(i) + " ");
+            remained--;
+        }
+
+        if (remained > 0) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < remained; i++) {
+                sb.append(" ");
+            }
+            temp.add(sb.toString());
+        }
+        return transform2Str(temp);
+    }
+
+    private static String buildStr(List<String> temp, int tempLen, int maxWidth) {
+        int remained = maxWidth - tempLen;
+        if (temp.size() == 1) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < remained; i++) {
+                sb.append(" ");
+            }
+            return temp.get(0) + sb;
+        }
+
+        while (remained > 0) {
+            for (int i = 0; i < temp.size() - 1; i++) {
+                temp.set(i, temp.get(i) + " ");
+                remained--;
+                if (remained == 0) {
+                    return transform2Str(temp);
+                }
+            }
+        }
+        return transform2Str(temp);
+    }
+
+    private static String transform2Str(List<String> temp) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : temp) {
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
+    public static boolean isPalindrome(String s) {
+        s = s.toLowerCase();
+        int i = 0;
+        int j = s.length() - 1;
+        A:
+        while (i <= j && i < s.length() && j >= 0) {
+            while (!isChar(s.charAt(i))) {
+                i++;
+                if (i >= s.length()) {
+                    break A;
+                }
+            }
+            while (!isChar(s.charAt(j))) {
+                j--;
+                if (j < 0) {
+                    break A;
+                }
+            }
+            if (s.charAt(i) != s.charAt(j)) {
+                return false;
+            }
+            i++;
+            j--;
+        }
+        return j <= i;
+    }
+
+    private static boolean isChar(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+    }
+
+    public static boolean isSubsequence(String s, String t) {
+        t = " " + t;
+        int[][] dp = new int[t.length()][26];
+        for (int i = 0; i < 26; i++) {
+            int nextPos = -1;
+            for (int j = t.length() - 1; j >= 0; j--) {
+                dp[j][i] = nextPos;
+                if(t.charAt(j) == i+'a'){
+                    nextPos = j;
+                }
+            }
+        }
+
+        int currentTIndex = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if(dp[currentTIndex][s.charAt(i)-'a']==-1){
+                return false;
+            }else {
+                currentTIndex = dp[currentTIndex][s.charAt(i)-'a'];
+            }
+        }
+        return true;
+        
+    }
+
 
     public static void main(String[] args) {
-        System.out.println(strStr("mississippi", "issip"));
+        System.out.println(isSubsequence("abc","ahbgdc"));
     }
 }
