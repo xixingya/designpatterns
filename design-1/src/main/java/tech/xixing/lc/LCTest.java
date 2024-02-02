@@ -445,7 +445,7 @@ public class LCTest {
     }
 
     public static String convert(String s, int numRows) {
-        if(numRows==1){
+        if (numRows == 1) {
             return s;
         }
         List<StringBuilder> list = new ArrayList<>();
@@ -457,15 +457,15 @@ public class LCTest {
         boolean isAdd = true;
         for (int i = 0; i < s.length(); i++) {
             list.get(index).append(s.charAt(i));
-            if (index == numRows-1) {
+            if (index == numRows - 1) {
                 isAdd = false;
             }
             if (index == 0) {
                 isAdd = true;
             }
-            if(isAdd){
+            if (isAdd) {
                 index++;
-            }else {
+            } else {
                 index--;
             }
         }
@@ -476,8 +476,53 @@ public class LCTest {
         return sb.toString();
     }
 
+    public static int strStr(String haystack, String needle) {
+        if (needle.length() > haystack.length()) {
+            return -1;
+        }
+        List<Integer> indexFirst = new ArrayList<>();
+
+        for (int i = 0; i < haystack.length(); i++) {
+            if (haystack.charAt(i) == needle.charAt(0)) {
+                indexFirst.add(i);
+
+            }
+        }
+        for (Integer i : indexFirst) {
+            for (int j = 0; j < needle.length(); j++) {
+                if (haystack.charAt(i) == needle.charAt(j)) {
+                    if (j == needle.length() - 1) {
+                        return i - j;
+                    }
+                    i++;
+                } else {
+                    break;
+                }
+                if (i >= haystack.length()) {
+                    break;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private void getNext(String s, int[] next) {
+        int i = 0;
+        next[0] = -1;
+        int j = -1;
+        while (i < s.length()) {
+            if(j==-1||s.charAt(i)==s.charAt(j)){
+                i++;
+                j++;
+                next[i] = j;
+            }else {
+                j = next[j];
+            }
+        }
+    }
+
 
     public static void main(String[] args) {
-        System.out.println(convert("PAYPALISHIRING",3));
+        System.out.println(strStr("mississippi", "issip"));
     }
 }
