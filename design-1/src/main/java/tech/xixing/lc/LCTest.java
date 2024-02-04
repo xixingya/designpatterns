@@ -636,7 +636,7 @@ public class LCTest {
             int nextPos = -1;
             for (int j = t.length() - 1; j >= 0; j--) {
                 dp[j][i] = nextPos;
-                if(t.charAt(j) == i+'a'){
+                if (t.charAt(j) == i + 'a') {
                     nextPos = j;
                 }
             }
@@ -644,18 +644,137 @@ public class LCTest {
 
         int currentTIndex = 0;
         for (int i = 0; i < s.length(); i++) {
-            if(dp[currentTIndex][s.charAt(i)-'a']==-1){
+            if (dp[currentTIndex][s.charAt(i) - 'a'] == -1) {
                 return false;
-            }else {
-                currentTIndex = dp[currentTIndex][s.charAt(i)-'a'];
+            } else {
+                currentTIndex = dp[currentTIndex][s.charAt(i) - 'a'];
             }
         }
         return true;
-        
+
+    }
+
+    public int[] twoSum(int[] numbers, int target) {
+        int left = 0;
+        int right = numbers.length - 1;
+        while (left < right) {
+            if (numbers[left] + numbers[right] > target) {
+                right--;
+            } else if (numbers[left] + numbers[right] < target) {
+                left++;
+            } else {
+                return new int[]{left + 1, right + 1};
+            }
+        }
+        return new int[]{};
+
+    }
+
+    public int maxArea(int[] height) {
+        int left = 0;
+        int right = height.length - 1;
+        int maxAr = 0;
+        while (left < right) {
+            maxAr = Math.max((right - left) * Math.min(height[left], height[right]), maxAr);
+            if (height[left] > height[right]) {
+                right--;
+            } else {
+                left++;
+            }
+        }
+        return maxAr;
+    }
+
+    public static List<List<Integer>> threeSum(int[] nums) {
+        Arrays.sort(nums);
+        List<List<Integer>> result = new ArrayList<>();
+        for (int i = 0; i < nums.length - 2; i++) {
+            if (i > 0 && nums[i] == nums[i - 1]) {
+                continue;
+            }
+            int left = i + 1;
+            int right = nums.length - 1;
+            A:
+            while (left < right) {
+                int res = nums[left] + nums[right] + nums[i];
+                if (res == 0) {
+                    result.add(Arrays.asList(nums[i], nums[left], nums[right]));
+                    while (left + 1 < right && nums[left + 1] == nums[left]) {
+                        left++;
+                    }
+                    while (right - 1 > left && nums[right - 1] == nums[right]) {
+                        right--;
+                    }
+                    left++;
+                    right--;
+                    continue;
+                }
+                if (res > 0) {
+                    int temp = nums[right];
+                    right--;
+                    while (temp == nums[right]) {
+                        if (right > left) {
+                            right--;
+                        } else {
+                            break A;
+                        }
+                    }
+                } else {
+                    int temp = nums[left];
+                    left++;
+                    while (temp == nums[left]) {
+                        if (left < right) {
+                            left++;
+                        } else {
+                            break A;
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public static int minSubArrayLen(int target, int[] nums) {
+        int left = 0;
+        int right = 0;
+        int min = Integer.MAX_VALUE;
+        int total = 0;
+
+        while (right < nums.length) {
+            total = total + nums[right];
+            right++;
+            while (total >= target) {
+                min = Math.min(min, right - left);
+                total = total - nums[left];
+                left++;
+            }
+        }
+        return min;
+
+    }
+
+    public static int lengthOfLongestSubstring(String s) {
+        Map<Character, Integer> charMap = new HashMap<>();
+        charMap.put(s.charAt(0), 0);
+        int maxLen = 0;
+        int left = 0;
+        int right = 1;
+
+        while (right < s.length()) {
+            Integer i = charMap.get(s.charAt(right));
+            if (i != null && left <= i) {
+                maxLen = Math.max(right-left,maxLen);
+                left = i + 1;
+            }
+            charMap.put(s.charAt(right), right);
+            right++;
+        }
+        return maxLen;
     }
 
 
     public static void main(String[] args) {
-        System.out.println(isSubsequence("abc","ahbgdc"));
+        System.out.println(lengthOfLongestSubstring("abcabcbb"));
     }
 }
