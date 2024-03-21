@@ -30,21 +30,21 @@ public class NodeFlatten {
         return head;
     }
 
-    public static void main(String[] args) {
-        Node node = new Node();
-        node.val = 1;
-        Node node1 = new Node(2);
-        node1.prev = node;
-        node.next = node1;
-        Node child = new Node(3);
-        Node child2 = new Node(4);
-        child2.prev = child;
-        child.next = child2;
-        node1.child = child;
-        Node node2 = new Node(6);
-        node2.prev = node1;
-        node1.next = node2;
-        Node flatten = flatten(node);
-        System.out.println(flatten);
-    }
+//    public static void main(String[] args) {
+//        Node node = new Node();
+//        node.val = 1;
+//        Node node1 = new Node(2);
+//        node1.prev = node;
+//        node.next = node1;
+//        Node child = new Node(3);
+//        Node child2 = new Node(4);
+//        child2.prev = child;
+//        child.next = child2;
+//        node1.child = child;
+//        Node node2 = new Node(6);
+//        node2.prev = node1;
+//        node1.next = node2;
+//        Node flatten = flatten(node);
+//        System.out.println(flatten);
+//    }
 }
